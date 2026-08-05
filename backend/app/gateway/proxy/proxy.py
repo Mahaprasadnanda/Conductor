@@ -9,7 +9,10 @@ class ProxyEngine:
     async def forward(context: RequestContext):
         request = await RequestBuilder.build(context)
         
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        # Use dynamic timeout from resilience context, default to 30.0 if not available
+        timeout = context.resilience.timeout if context.resilience.timeout else 30.0
+        
+        async with httpx.AsyncClient(timeout=timeout) as client:
             try:
                 response = await client.send(request)
             except Exception as e:

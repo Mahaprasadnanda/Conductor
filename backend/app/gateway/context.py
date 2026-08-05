@@ -39,6 +39,15 @@ class RateLimitContext:
     policy_id: Optional[int] = None
 
 @dataclass
+class ResilienceContext:
+    circuit_state: Optional[str] = None
+    retry_count: int = 0
+    timeout: Optional[float] = None
+    fallback_used: bool = False
+    failure_reason: Optional[str] = None
+    policy_id: Optional[int] = None
+
+@dataclass
 class RequestContext:
     request_id: str
     trace_id: str
@@ -50,6 +59,7 @@ class RequestContext:
     metrics: MetricsContext = field(default_factory=MetricsContext)
     custom: CustomContext = field(default_factory=CustomContext)
     rate_limit: RateLimitContext = field(default_factory=RateLimitContext)
+    resilience: ResilienceContext = field(default_factory=ResilienceContext)
 
     # fastapi native objects if needed by proxy/middleware
     fastapi_request: Optional[Any] = None

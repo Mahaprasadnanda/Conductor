@@ -18,9 +18,8 @@ from app.gateway.middleware.authentication import AuthenticationMiddleware
 from app.gateway.middleware.timing import TimingMiddleware
 from app.gateway.middleware.logging import LoggingMiddleware
 from app.gateway.middleware.rate_limiter import RateLimiterMiddleware
+from app.gateway.middleware.resilience import ResilienceMiddleware
 from app.gateway.middleware.placeholders import (
-    CircuitBreakerMiddleware,
-    RetryMiddleware,
     CacheMiddleware,
     AdaptiveRoutingMiddleware
 )
@@ -31,7 +30,6 @@ register_middleware("authentication", AuthenticationMiddleware)
 register_middleware("timing", TimingMiddleware)
 register_middleware("logging", LoggingMiddleware)
 register_middleware("rate_limiter", RateLimiterMiddleware)
-register_middleware("circuit_breaker", CircuitBreakerMiddleware)
-register_middleware("retry", RetryMiddleware)
+register_middleware("resilience", ResilienceMiddleware)
 register_middleware("cache", CacheMiddleware)
 register_middleware("adaptive_routing", AdaptiveRoutingMiddleware)

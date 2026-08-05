@@ -27,5 +27,11 @@ class LoggingMiddleware(BaseMiddleware):
             rl_allowed=context.rate_limit.allowed,
             rl_limit=context.rate_limit.limit,
             rl_remaining=context.rate_limit.remaining,
-            rl_reset_time=context.rate_limit.reset_time
+            rl_reset_time=context.rate_limit.reset_time,
+            res_policy_id=context.resilience.policy_id,
+            res_circuit_state=context.resilience.circuit_state,
+            res_retry_count=context.resilience.retry_count,
+            res_timeout=context.resilience.timeout,
+            res_fallback_used=context.resilience.fallback_used,
+            res_failure_reason=context.resilience.failure_reason
         )

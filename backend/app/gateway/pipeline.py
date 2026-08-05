@@ -8,6 +8,7 @@ DEFAULT_MIDDLEWARE_ORDER = [
     "request_id",
     "authentication",
     "rate_limiter",
+    "resilience",
     "logging",
     "timing"
 ]
@@ -33,24 +34,35 @@ class GatewayPipeline:
 
     async def execute(self, context: RequestContext, proxy_func: Callable[[RequestContext], Awaitable[Any]]) -> Any:
         await self.on_request_start(context)
-        response = None
-        executed_middlewares = []
         
+        async def call_middleware(index: int) -> Any:
+            if index < len(self.middlewares):
+                mw = self.middlewares[index]
+                if hasattr(mw, "dispatch"):
+                    return await mw.dispatch(context, lambda: call_middleware(index + 1))
+                else:
+                    await mw.before_request(context)
+                    try:
+                        response = await call_middleware(index + 1)
+                    except Exception:
+                        try:
+                            await mw.after_response(context, None)
+                        except Exception as e:
+                            log.error("middleware_after_response_error", middleware=mw.__class__.__name__, error=str(e))
+                        raise
+                    else:
+                        try:
+                            await mw.after_response(context, response)
+                        except Exception as e:
+                            log.error("middleware_after_response_error", middleware=mw.__class__.__name__, error=str(e))
+                        return response
+            else:
+                await self.on_before_proxy(context)
+                response = await proxy_func(context)
+                await self.on_after_proxy(context, response)
+                return response
+
         try:
-            for mw in self.middlewares:
-                await mw.before_request(context)
-                executed_middlewares.append(mw)
-                
-            await self.on_before_proxy(context)
-            response = await proxy_func(context)
-            await self.on_after_proxy(context, response)
-            return response
+            return await call_middleware(0)
         finally:
-            # Execute after_response in reverse order
-            for mw in reversed(executed_middlewares):
-                try:
-                    await mw.after_response(context, response)
-                except Exception as e:
-                    log.error("middleware_after_response_error", middleware=mw.__class__.__name__, error=str(e))
-                    
             await self.on_request_end(context)

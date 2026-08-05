@@ -7,10 +7,11 @@ import os
 
 from app.models.base import Base
 import app.models.user
-import app.models.project
-import app.models.service
-import app.models.endpoint
-import app.models.rate_limit
+from app.models.project import Project
+from app.models.service import Service
+from app.models.endpoint import Endpoint
+from app.models.rate_limit import RateLimitPolicy
+from app.models.resilience import ResiliencePolicy
 from app.config.settings import settings
 
 config = context.config
