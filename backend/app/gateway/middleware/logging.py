@@ -22,4 +22,10 @@ class LoggingMiddleware(BaseMiddleware):
             status_code=context.gateway.response_status,
             latency=latency_str,
             response_size=context.gateway.response_size,
+            rl_policy_id=context.rate_limit.policy_id,
+            rl_algorithm=context.rate_limit.algorithm,
+            rl_allowed=context.rate_limit.allowed,
+            rl_limit=context.rate_limit.limit,
+            rl_remaining=context.rate_limit.remaining,
+            rl_reset_time=context.rate_limit.reset_time
         )

@@ -64,3 +64,11 @@ async def auth_headers(async_client, test_user):
     )
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
+
+@pytest_asyncio.fixture(scope="function", autouse=True)
+async def flush_redis():
+    from redis.asyncio import Redis
+    from app.config.settings import settings
+    redis = Redis.from_url(settings.REDIS_URL, decode_responses=True)
+    await redis.flushdb()
+    await redis.aclose()

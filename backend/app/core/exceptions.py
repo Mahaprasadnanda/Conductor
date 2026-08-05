@@ -20,6 +20,7 @@ async def gateway_exception_handler(request: Request, exc: GatewayException):
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.message},
+        headers=exc.headers
     )
 
 async def global_exception_handler(request: Request, exc: Exception):

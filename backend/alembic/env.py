@@ -10,6 +10,7 @@ import app.models.user
 import app.models.project
 import app.models.service
 import app.models.endpoint
+import app.models.rate_limit
 from app.config.settings import settings
 
 config = context.config

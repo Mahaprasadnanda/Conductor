@@ -7,8 +7,9 @@ from app.core.logger import log
 DEFAULT_MIDDLEWARE_ORDER = [
     "request_id",
     "authentication",
-    "timing",
-    "logging"
+    "rate_limiter",
+    "logging",
+    "timing"
 ]
 
 class GatewayPipeline:

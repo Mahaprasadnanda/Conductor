@@ -17,8 +17,8 @@ from app.gateway.middleware.request_id import RequestIdMiddleware
 from app.gateway.middleware.authentication import AuthenticationMiddleware
 from app.gateway.middleware.timing import TimingMiddleware
 from app.gateway.middleware.logging import LoggingMiddleware
+from app.gateway.middleware.rate_limiter import RateLimiterMiddleware
 from app.gateway.middleware.placeholders import (
-    RateLimiterMiddleware,
     CircuitBreakerMiddleware,
     RetryMiddleware,
     CacheMiddleware,
