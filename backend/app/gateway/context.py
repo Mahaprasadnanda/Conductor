@@ -30,6 +30,15 @@ class CustomContext:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
+class RateLimitContext:
+    limit: Optional[int] = None
+    remaining: Optional[int] = None
+    reset_time: Optional[float] = None
+    allowed: Optional[bool] = None
+    algorithm: Optional[str] = None
+    policy_id: Optional[int] = None
+
+@dataclass
 class RequestContext:
     request_id: str
     trace_id: str
@@ -40,6 +49,7 @@ class RequestContext:
     gateway: GatewayContext = field(default_factory=GatewayContext)
     metrics: MetricsContext = field(default_factory=MetricsContext)
     custom: CustomContext = field(default_factory=CustomContext)
+    rate_limit: RateLimitContext = field(default_factory=RateLimitContext)
 
     # fastapi native objects if needed by proxy/middleware
     fastapi_request: Optional[Any] = None
