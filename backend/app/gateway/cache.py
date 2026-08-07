@@ -41,6 +41,7 @@ class ServiceCache:
                 "base_url": str(s.base_url),
                 "health_check_path": s.health_check_path,
                 "authentication_mode": s.authentication_mode,
+                "load_balancer_strategy": s.load_balancer_strategy.value if hasattr(s.load_balancer_strategy, "value") else s.load_balancer_strategy,
                 "status": s.status
             })
         log.info("service_cache_synced", count=len(services))

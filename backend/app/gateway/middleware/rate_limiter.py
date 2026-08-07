@@ -24,15 +24,20 @@ class RateLimiterMiddleware(BaseMiddleware):
                     RateLimitPolicy.enabled == True,
                     or_(
                         and_(RateLimitPolicy.service_id == service_id, RateLimitPolicy.endpoint_path == endpoint),
-                        and_(RateLimitPolicy.service_id == service_id, RateLimitPolicy.endpoint_path == None),
-                        and_(RateLimitPolicy.service_id == None, RateLimitPolicy.endpoint_path == endpoint),
-                        and_(RateLimitPolicy.service_id == None, RateLimitPolicy.endpoint_path == None)
+                        and_(RateLimitPolicy.service_id == service_id, RateLimitPolicy.endpoint_path.is_(None)),
+                        and_(RateLimitPolicy.service_id.is_(None), RateLimitPolicy.endpoint_path == endpoint),
+                        and_(RateLimitPolicy.service_id.is_(None), RateLimitPolicy.endpoint_path.is_(None))
                     )
                 )
             )
             policies = result.scalars().all()
             
+            import structlog
+            log = structlog.get_logger()
+            log.info("RateLimiter Debug", service_id=service_id, endpoint=endpoint, policies_found=len(policies))
+            
             for p in policies:
+                log.info("RateLimiter Policy Debug", p_id=p.id, p_svc_id=p.service_id, p_ep=p.endpoint_path)
                 if p.service_id == service_id and p.endpoint_path == endpoint:
                     return {"id": p.id, "limit": p.limit, "window": p.window_seconds, "algo": p.algorithm.value}
             
@@ -62,7 +67,18 @@ class RateLimiterMiddleware(BaseMiddleware):
         
         if endpoint and not endpoint.startswith("/"):
             endpoint = f"/{endpoint}"
-            
+        
+        try:
+            from prometheus_client import REGISTRY
+            from app.core.logger import log
+            from app.gateway.metrics.prometheus import prometheus_manager
+            log.info("RateLimiterMiddleware_Debug", 
+                     registry_id=id(REGISTRY), 
+                     manager_id=id(prometheus_manager),
+                     counter_id=id(prometheus_manager.gateway_requests_total))
+        except:
+            pass
+
         user_id = context.auth.authenticated_user
         
         policy = await self._get_policy(service_id, endpoint)
@@ -116,6 +132,13 @@ class RateLimiterMiddleware(BaseMiddleware):
                 "X-RateLimit-Reset": str(int(result.reset_time)),
                 "Retry-After": str(retry_after)
             }
+            
+            # Record prometheus metric before throwing
+            from app.gateway.metrics.prometheus import prometheus_manager
+            prometheus_manager.gateway_rate_limit_hits_total.labels(
+                service_name=service_name or "unknown"
+            ).inc()
+            
             raise RateLimitException(headers=headers)
 
     async def after_response(self, context: RequestContext, response: Optional[Any]) -> None:

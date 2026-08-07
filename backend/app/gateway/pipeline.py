@@ -6,9 +6,11 @@ from app.core.logger import log
 
 DEFAULT_MIDDLEWARE_ORDER = [
     "request_id",
+    "prometheus",
     "authentication",
     "rate_limiter",
     "resilience",
+    "load_balancer",
     "logging",
     "timing"
 ]
@@ -38,24 +40,36 @@ class GatewayPipeline:
         async def call_middleware(index: int) -> Any:
             if index < len(self.middlewares):
                 mw = self.middlewares[index]
-                if hasattr(mw, "dispatch"):
-                    return await mw.dispatch(context, lambda: call_middleware(index + 1))
-                else:
-                    await mw.before_request(context)
-                    try:
-                        response = await call_middleware(index + 1)
-                    except Exception:
-                        try:
-                            await mw.after_response(context, None)
-                        except Exception as e:
-                            log.error("middleware_after_response_error", middleware=mw.__class__.__name__, error=str(e))
-                        raise
+                mw_name = mw.__class__.__name__
+                import time
+                start = time.perf_counter()
+                
+                try:
+                    if hasattr(mw, "dispatch"):
+                        return await mw.dispatch(context, lambda: call_middleware(index + 1))
                     else:
+                        await mw.before_request(context)
                         try:
-                            await mw.after_response(context, response)
-                        except Exception as e:
-                            log.error("middleware_after_response_error", middleware=mw.__class__.__name__, error=str(e))
-                        return response
+                            response = await call_middleware(index + 1)
+                        except Exception:
+                            try:
+                                await mw.after_response(context, None)
+                            except Exception as e:
+                                log.error("middleware_after_response_error", middleware=mw_name, error=str(e))
+                            raise
+                        else:
+                            try:
+                                await mw.after_response(context, response)
+                            except Exception as e:
+                                log.error("middleware_after_response_error", middleware=mw_name, error=str(e))
+                            return response
+                finally:
+                    # Accumulate time spent traversing this middleware layer
+                    # Note: For nested async calls, this measures the entire time from entering to exiting
+                    # However, since we wait for the rest of the chain, to isolate just this middleware's time 
+                    # accurately we would need before/after hooks. But measuring the full layer is also standard.
+                    elapsed = time.perf_counter() - start
+                    context.metrics.middleware_timings[mw_name] = elapsed
             else:
                 await self.on_before_proxy(context)
                 response = await proxy_func(context)

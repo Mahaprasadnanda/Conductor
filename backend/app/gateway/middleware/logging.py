@@ -33,5 +33,11 @@ class LoggingMiddleware(BaseMiddleware):
             res_retry_count=context.resilience.retry_count,
             res_timeout=context.resilience.timeout,
             res_fallback_used=context.resilience.fallback_used,
-            res_failure_reason=context.resilience.failure_reason
+            res_failure_reason=context.resilience.failure_reason,
+            lb_strategy=context.load_balancer.strategy,
+            lb_service_pool_size=context.load_balancer.service_pool_size,
+            lb_selected_instance=context.load_balancer.selected_instance,
+            lb_active_connections=context.load_balancer.active_connections,
+            lb_instance_latency=context.load_balancer.instance_latency,
+            lb_routing_reason=context.load_balancer.routing_reason
         )

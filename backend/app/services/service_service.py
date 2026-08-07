@@ -28,6 +28,8 @@ class ServiceService:
             "service_name": db_service.service_name,
             "base_url": db_service.base_url,
             "health_check_path": db_service.health_check_path,
+            "authentication_mode": db_service.authentication_mode,
+            "load_balancer_strategy": db_service.load_balancer_strategy.value if hasattr(db_service.load_balancer_strategy, "value") else db_service.load_balancer_strategy,
             "status": db_service.status
         })
         return db_service
@@ -54,6 +56,8 @@ class ServiceService:
             "service_name": updated_service.service_name,
             "base_url": updated_service.base_url,
             "health_check_path": updated_service.health_check_path,
+            "authentication_mode": updated_service.authentication_mode,
+            "load_balancer_strategy": updated_service.load_balancer_strategy.value if hasattr(updated_service.load_balancer_strategy, "value") else updated_service.load_balancer_strategy,
             "status": updated_service.status
         })
         return updated_service

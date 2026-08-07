@@ -24,6 +24,14 @@ class GatewayContext:
 class MetricsContext:
     start_time: Optional[float] = None
     latency: Optional[float] = None
+    gateway_latency: Optional[float] = None
+    upstream_latency: Optional[float] = None
+    selected_instance: Optional[str] = None
+    retry_count: int = 0
+    circuit_state: Optional[str] = None
+    rate_limit_hit: bool = False
+    middleware_timings: Dict[str, float] = field(default_factory=dict)
+    request_completed: bool = False
 
 @dataclass
 class CustomContext:
@@ -48,6 +56,15 @@ class ResilienceContext:
     policy_id: Optional[int] = None
 
 @dataclass
+class LoadBalancerContext:
+    selected_instance: Optional[str] = None
+    strategy: Optional[str] = None
+    service_pool_size: int = 0
+    active_connections: Optional[int] = None
+    instance_latency: Optional[float] = None
+    routing_reason: Optional[str] = None
+
+@dataclass
 class RequestContext:
     request_id: str
     trace_id: str
@@ -60,6 +77,7 @@ class RequestContext:
     custom: CustomContext = field(default_factory=CustomContext)
     rate_limit: RateLimitContext = field(default_factory=RateLimitContext)
     resilience: ResilienceContext = field(default_factory=ResilienceContext)
+    load_balancer: LoadBalancerContext = field(default_factory=LoadBalancerContext)
 
     # fastapi native objects if needed by proxy/middleware
     fastapi_request: Optional[Any] = None

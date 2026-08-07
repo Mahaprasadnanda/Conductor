@@ -38,8 +38,23 @@ def override_get_db(db_session):
     async def _override_get_db():
         yield db_session
     app.dependency_overrides[get_db_session] = _override_get_db
+    
+    # Also override the global async_session_maker for middlewares
+    import app.database.connection as db_conn
+    from contextlib import asynccontextmanager
+    
+    original_maker = db_conn.async_session_maker
+    
+    @asynccontextmanager
+    async def _mock_maker():
+        yield db_session
+        
+    db_conn.async_session_maker = _mock_maker
+    
     yield
+    
     app.dependency_overrides.clear()
+    db_conn.async_session_maker = original_maker
 
 @pytest_asyncio.fixture(scope="function")
 async def async_client(override_get_db):

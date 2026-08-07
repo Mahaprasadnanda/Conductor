@@ -12,11 +12,15 @@ class ProxyEngine:
         # Use dynamic timeout from resilience context, default to 30.0 if not available
         timeout = context.resilience.timeout if context.resilience.timeout else 30.0
         
+        import time
+        upstream_start = time.perf_counter()
         async with httpx.AsyncClient(timeout=timeout) as client:
             try:
                 response = await client.send(request)
             except Exception as e:
                 raise ProxyException(f"Failed to forward request: {str(e)}")
+            finally:
+                context.metrics.upstream_latency = time.perf_counter() - upstream_start
                 
         # Populate context with response data
         context.gateway.response_status = response.status_code

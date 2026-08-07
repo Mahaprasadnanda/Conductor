@@ -23,11 +23,25 @@ class ServiceRegistry:
 
         async with httpx.AsyncClient(timeout=5.0) as client:
             try:
-                response = await client.get(url)
-                if 200 <= response.status_code < 300:
-                    return service_name, ServiceStatus.HEALTHY
+                # Use stream to immediately get headers and avoid ReadTimeout on hanging connections
+                async with client.stream("GET", url) as response:
+                    log.info("health_check_response", url=url, status=response.status_code)
+                    if 200 <= response.status_code < 300:
+                        try:
+                            # Attempt to read body with a short timeout to check for explicit {"status": "unhealthy"}
+                            await response.aread()
+                            data = response.json()
+                            if isinstance(data, dict):
+                                status_val = str(data.get("status", "")).lower()
+                                if status_val in ["unhealthy", "down", "error", "fail"]:
+                                    return service_name, ServiceStatus.UNHEALTHY
+                        except Exception:
+                            pass # Ignore JSON parsing or body read errors, 200 OK is enough
+                            
+                        return service_name, ServiceStatus.HEALTHY
                 return service_name, ServiceStatus.UNHEALTHY
-            except Exception:
+            except Exception as e:
+                log.error("health_check_exception", url=url, error=str(e))
                 return service_name, ServiceStatus.UNHEALTHY
 
     @staticmethod

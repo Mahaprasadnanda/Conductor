@@ -19,10 +19,12 @@ from app.gateway.middleware.timing import TimingMiddleware
 from app.gateway.middleware.logging import LoggingMiddleware
 from app.gateway.middleware.rate_limiter import RateLimiterMiddleware
 from app.gateway.middleware.resilience import ResilienceMiddleware
+from app.gateway.middleware.load_balancer import LoadBalancerMiddleware
 from app.gateway.middleware.placeholders import (
     CacheMiddleware,
     AdaptiveRoutingMiddleware
 )
+from app.gateway.middleware.prometheus import PrometheusMiddleware
 
 # Register built-ins
 register_middleware("request_id", RequestIdMiddleware)
@@ -31,5 +33,7 @@ register_middleware("timing", TimingMiddleware)
 register_middleware("logging", LoggingMiddleware)
 register_middleware("rate_limiter", RateLimiterMiddleware)
 register_middleware("resilience", ResilienceMiddleware)
+register_middleware("load_balancer", LoadBalancerMiddleware)
+register_middleware("prometheus", PrometheusMiddleware)
 register_middleware("cache", CacheMiddleware)
 register_middleware("adaptive_routing", AdaptiveRoutingMiddleware)
