@@ -7,6 +7,7 @@ from app.api.v1.service_instances import router as service_instances_router
 from app.api.v1.gateway import router as gateway_router
 from app.api.v1.rate_limits import router as rate_limits_router
 from app.api.v1.resilience import router as resilience_router
+from app.api.v1.analytics import router as analytics_router
 
 router = APIRouter()
 
@@ -17,4 +18,5 @@ router.include_router(service_instances_router, prefix="/service-instances", tag
 router.include_router(gateway_router, prefix="/gateway", tags=["gateway"])
 router.include_router(rate_limits_router, prefix="/rate-limits", tags=["rate_limits"])
 router.include_router(resilience_router, prefix="/resilience", tags=["resilience"])
+router.include_router(analytics_router, prefix="/analytics", tags=["analytics"])
 router.include_router(health_router, prefix="/health", tags=["health"])
