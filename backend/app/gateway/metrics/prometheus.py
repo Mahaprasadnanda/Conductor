@@ -5,46 +5,46 @@ class PrometheusManager:
     gateway_requests_total = Counter(
         "gateway_requests_total",
         "Total requests processed by the gateway",
-        ["service_name", "method", "status_code"]
+        ["project_id", "service_name", "service_id", "method", "status_code"]
     )
     
     gateway_lb_routing_total = Counter(
         "gateway_lb_routing_total",
         "Total requests routed to a specific instance",
-        ["service_name", "instance_id", "strategy"]
+        ["project_id", "service_name", "service_id", "instance_id", "strategy"]
     )
     
     gateway_rate_limit_hits_total = Counter(
         "gateway_rate_limit_hits_total",
         "Total requests rejected by rate limiting",
-        ["service_name"]
+        ["project_id", "service_name", "service_id"]
     )
     
     gateway_retries_total = Counter(
         "gateway_retries_total",
         "Total number of request retries",
-        ["service_name"]
+        ["project_id", "service_name", "service_id"]
     )
     
     gateway_proxy_errors_total = Counter(
         "gateway_proxy_errors_total",
         "Total number of proxy errors",
-        ["service_name", "error_type"]
+        ["project_id", "service_name", "service_id", "error_type"]
     )
     
     # Histograms
     gateway_request_latency_seconds = Histogram(
         "gateway_request_latency_seconds",
         "Total latency of the request including gateway overhead",
-        ["service_name"],
-        buckets=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+        ["project_id", "service_name", "service_id"],
+        buckets=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.5, 10.0]
     )
     
     gateway_upstream_latency_seconds = Histogram(
         "gateway_upstream_latency_seconds",
         "Latency of the upstream service excluding gateway overhead",
-        ["service_name"],
-        buckets=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+        ["project_id", "service_name", "service_id"],
+        buckets=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.5, 10.0]
     )
     
     gateway_middleware_execution_seconds = Histogram(
@@ -58,13 +58,13 @@ class PrometheusManager:
     gateway_active_connections = Gauge(
         "gateway_active_connections",
         "Active connections currently held by instances",
-        ["service_name", "instance_id"]
+        ["project_id", "service_name", "service_id", "instance_id"]
     )
     
     gateway_circuit_breaker_state = Gauge(
         "gateway_circuit_breaker_state",
         "State of the circuit breaker (0=CLOSED, 1=HALF_OPEN, 2=OPEN)",
-        ["service_name"]
+        ["project_id", "service_name", "service_id"]
     )
     
     gateway_inflight_requests = Gauge(

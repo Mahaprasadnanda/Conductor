@@ -99,20 +99,36 @@ class RateLimiterMiddleware(BaseMiddleware):
         current_time = time.time()
         redis = get_redis()
         
-        result = await self.strategy.is_allowed(
-            redis=redis,
-            key=key,
-            limit=policy["limit"],
-            window_seconds=policy["window"],
-            current_time=current_time
-        )
-        
-        context.rate_limit.limit = policy["limit"]
-        context.rate_limit.remaining = result.remaining
-        context.rate_limit.reset_time = result.reset_time
-        context.rate_limit.allowed = result.allowed
-        context.rate_limit.algorithm = policy["algo"]
-        context.rate_limit.policy_id = policy["id"]
+        try:
+            result = await self.strategy.is_allowed(
+                redis=redis,
+                key=key,
+                limit=policy["limit"],
+                window_seconds=policy["window"],
+                current_time=current_time
+            )
+            
+            context.rate_limit.limit = policy["limit"]
+            context.rate_limit.remaining = result.remaining
+            context.rate_limit.reset_time = result.reset_time
+            context.rate_limit.allowed = result.allowed
+            context.rate_limit.algorithm = policy["algo"]
+            context.rate_limit.policy_id = policy["id"]
+        except Exception as e:
+            log.warning("redis_rate_limit_failure", error=str(e), action="failing_open")
+            context.rate_limit.limit = policy["limit"]
+            context.rate_limit.remaining = 1
+            context.rate_limit.reset_time = current_time
+            context.rate_limit.allowed = True
+            context.rate_limit.algorithm = policy["algo"]
+            context.rate_limit.policy_id = policy["id"]
+            
+            # Since it failed open, skip the block below by setting a dummy result
+            class DummyResult:
+                allowed = True
+                remaining = 1
+                reset_time = current_time
+            result = DummyResult()
         
         log.info("RateLimiterMiddleware Debug", extra={
             "service_id": service_id,
@@ -135,8 +151,14 @@ class RateLimiterMiddleware(BaseMiddleware):
             
             # Record prometheus metric before throwing
             from app.gateway.metrics.prometheus import prometheus_manager
+            
+            service_data = context.custom.metadata.get("service_data", {})
+            project_id = str(service_data.get("project_id", "0"))
+            
             prometheus_manager.gateway_rate_limit_hits_total.labels(
-                service_name=service_name or "unknown"
+                project_id=project_id,
+                service_name=service_name or "unknown",
+                service_id=str(service_id) if service_id else "0"
             ).inc()
             
             raise RateLimitException(headers=headers)

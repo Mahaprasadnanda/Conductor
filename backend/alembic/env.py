@@ -12,6 +12,7 @@ from app.models.service import Service
 from app.models.endpoint import Endpoint
 from app.models.rate_limit import RateLimitPolicy
 from app.models.resilience import ResiliencePolicy
+from app.models.api_key import ApiKey
 from app.config.settings import settings
 
 config = context.config

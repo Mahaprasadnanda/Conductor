@@ -25,6 +25,7 @@ from app.gateway.middleware.placeholders import (
     AdaptiveRoutingMiddleware
 )
 from app.gateway.middleware.prometheus import PrometheusMiddleware
+from app.gateway.middleware.status import StatusMiddleware
 
 # Register built-ins
 register_middleware("request_id", RequestIdMiddleware)
@@ -35,5 +36,6 @@ register_middleware("rate_limiter", RateLimiterMiddleware)
 register_middleware("resilience", ResilienceMiddleware)
 register_middleware("load_balancer", LoadBalancerMiddleware)
 register_middleware("prometheus", PrometheusMiddleware)
+register_middleware("status", StatusMiddleware)
 register_middleware("cache", CacheMiddleware)
 register_middleware("adaptive_routing", AdaptiveRoutingMiddleware)

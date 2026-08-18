@@ -10,6 +10,8 @@ from app.gateway.cache import service_cache
 from app.gateway.registry import ServiceRegistry
 from app.repositories.service import service_repo
 from app.gateway.metrics.prometheus import prometheus_manager
+from fastapi.middleware.cors import CORSMiddleware
+from app.config.settings import settings
 import asyncio
 
 setup_logger()
@@ -63,9 +65,38 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.add_exception_handler(GatewayException, gateway_exception_handler)
 app.add_exception_handler(AppException, app_exception_handler)
 app.add_exception_handler(Exception, global_exception_handler)
+
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+
+class HostRoutingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        host = request.headers.get("host", "")
+        if ".api.localhost" in host or ".api.conductor.dev" in host:
+            subdomain = host.split(".api.")[0]
+            original_path = request.scope.get("path", "")
+            # Ensure path doesn't get double slashed
+            if not original_path.startswith("/"):
+                original_path = "/" + original_path
+            
+            # Prevent double-prefixing if the user already includes the gateway path
+            if not original_path.startswith(f"/api/v1/gateway/{subdomain}") and not original_path.startswith("/api/v1/gateway/"):
+                request.scope["path"] = f"/api/v1/gateway/{subdomain}{original_path}"
+                
+        return await call_next(request)
+
+app.add_middleware(HostRoutingMiddleware)
 
 app.include_router(v1_router, prefix="/api/v1")
 app.include_router(metrics_router)

@@ -36,9 +36,14 @@ class PrometheusMiddleware(BaseMiddleware):
                 error_type = "timeout"
             elif "connection" in str(e).lower():
                 error_type = "connection_error"
+            service_data = context.custom.metadata.get("service_data", {})
+            project_id = str(service_data.get("project_id", "0"))
+            service_id = str(service_data.get("id", "0"))
                 
             prometheus_manager.gateway_proxy_errors_total.labels(
+                project_id=project_id,
                 service_name=context.gateway.service_name or "unknown",
+                service_id=service_id,
                 error_type=error_type
             ).inc()
             raise
@@ -47,6 +52,9 @@ class PrometheusMiddleware(BaseMiddleware):
                 prometheus_manager.gateway_inflight_requests.dec()
                 
                 service_name = context.gateway.service_name or "unknown"
+                service_data = context.custom.metadata.get("service_data", {})
+                project_id = str(service_data.get("project_id", "0"))
+                service_id = str(service_data.get("id", "0"))
                 
                 # Status code
                 status_code = context.gateway.response_status
@@ -59,7 +67,9 @@ class PrometheusMiddleware(BaseMiddleware):
                 # Check for 5xx errors from upstream
                 if status_code >= 500:
                     prometheus_manager.gateway_proxy_errors_total.labels(
+                        project_id=project_id,
                         service_name=service_name,
+                        service_id=service_id,
                         error_type="upstream_5xx"
                     ).inc()
                         
@@ -68,7 +78,9 @@ class PrometheusMiddleware(BaseMiddleware):
                 
                 # Record total requests
                 prometheus_manager.gateway_requests_total.labels(
+                    project_id=project_id,
                     service_name=service_name,
+                    service_id=service_id,
                     method=method,
                     status_code=str(status_code)
                 ).inc()
@@ -82,19 +94,25 @@ class PrometheusMiddleware(BaseMiddleware):
                 # Request latency (gateway + upstream)
                 if context.metrics.latency is not None:
                     prometheus_manager.gateway_request_latency_seconds.labels(
-                        service_name=service_name
+                        project_id=project_id,
+                        service_name=service_name,
+                        service_id=service_id
                     ).observe(context.metrics.latency)
                     
                 # Upstream latency
                 if context.metrics.upstream_latency is not None:
                     prometheus_manager.gateway_upstream_latency_seconds.labels(
-                        service_name=service_name
+                        project_id=project_id,
+                        service_name=service_name,
+                        service_id=service_id
                     ).observe(context.metrics.upstream_latency)
                     
                 # Resilience retries
                 if context.resilience.retry_count > 0:
                     prometheus_manager.gateway_retries_total.labels(
-                        service_name=service_name
+                        project_id=project_id,
+                        service_name=service_name,
+                        service_id=service_id
                     ).inc(context.resilience.retry_count)
                     
                 # Circuit breaker state
@@ -105,13 +123,17 @@ class PrometheusMiddleware(BaseMiddleware):
                     elif context.resilience.circuit_state == "OPEN":
                         state_val = 2
                     prometheus_manager.gateway_circuit_breaker_state.labels(
-                        service_name=service_name
+                        project_id=project_id,
+                        service_name=service_name,
+                        service_id=service_id
                     ).set(state_val)
                     
                 # Load balancer routing
                 if context.load_balancer.selected_instance and context.load_balancer.strategy:
                     prometheus_manager.gateway_lb_routing_total.labels(
+                        project_id=project_id,
                         service_name=service_name,
+                        service_id=service_id,
                         instance_id=context.load_balancer.selected_instance,
                         strategy=context.load_balancer.strategy
                     ).inc()

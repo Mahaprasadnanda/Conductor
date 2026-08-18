@@ -10,7 +10,7 @@ from app.models.resilience import ResiliencePolicy
 from app.models.service import Service, ServiceStatus
 
 @pytest_asyncio.fixture(autouse=True)
-async def setup_resilience(db_session, flush_redis):
+async def setup_resilience(db_session):
     session = db_session
     # Create service
     service = Service(
@@ -57,7 +57,7 @@ async def setup_resilience(db_session, flush_redis):
     })
 
 @pytest.mark.asyncio
-async def test_resilience_circuit_breaker(flush_redis):
+async def test_resilience_circuit_breaker():
     # Mock proxy to fail 503
     from app.gateway.proxy.proxy import ProxyEngine
     from app.gateway.exceptions import ProxyException

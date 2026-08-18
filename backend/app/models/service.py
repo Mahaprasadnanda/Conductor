@@ -8,6 +8,7 @@ class ServiceStatus(str, enum.Enum):
     UNHEALTHY = "Unhealthy"
     UNKNOWN = "Unknown"
     IMPORTING = "Importing"
+    DISABLED = "Disabled"
 
 class ServiceAuthMode(str, enum.Enum):
     PUBLIC = "PUBLIC"
@@ -38,7 +39,7 @@ class Service(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    project = relationship("Project", backref="services")
+    project = relationship("Project", back_populates="services")
     endpoints = relationship("Endpoint", back_populates="service", cascade="all, delete-orphan")
     instances = relationship("ServiceInstance", back_populates="service", cascade="all, delete-orphan")
 

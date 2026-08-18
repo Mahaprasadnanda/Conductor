@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import Projects from './pages/Projects';
+import ProjectLayout from './layouts/ProjectLayout';
+import Services from './pages/Services';
+import ApiKeys from './pages/ApiKeys';
+import Integration from './pages/Integration';
+import Settings from './pages/Settings';
 
 export const AuthContext = React.createContext<{
   token: string | null;
@@ -18,7 +25,26 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
-  const [token, setToken] = useState<string | null>(localStorage.getItem('conductor_token'));
+  const [token, setToken] = useState<string | null>(() => {
+    const storedToken = localStorage.getItem('conductor_token');
+    if (!storedToken) return null;
+    
+    try {
+      // Decode JWT payload without an external library
+      const payloadBase64 = storedToken.split('.')[1];
+      const decodedPayload = JSON.parse(atob(payloadBase64));
+      
+      // Check if token is expired (exp is in seconds, Date.now() is in ms)
+      if (decodedPayload.exp && decodedPayload.exp * 1000 < Date.now()) {
+        localStorage.removeItem('conductor_token');
+        return null;
+      }
+      return storedToken;
+    } catch (e) {
+      localStorage.removeItem('conductor_token');
+      return null;
+    }
+  });
 
   useEffect(() => {
     if (token) {
@@ -37,11 +63,32 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          
           <Route path="/" element={
             <ProtectedRoute>
-              <Dashboard />
+              <Navigate to="/projects" replace />
             </ProtectedRoute>
           } />
+          
+          <Route path="/projects" element={
+            <ProtectedRoute>
+              <Projects />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/projects/:projectId" element={
+            <ProtectedRoute>
+              <ProjectLayout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Navigate to="analytics" replace />} />
+            <Route path="analytics" element={<Dashboard />} />
+            <Route path="services" element={<Services />} />
+            <Route path="keys" element={<ApiKeys />} />
+            <Route path="integration" element={<Integration />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
         </Routes>
       </BrowserRouter>
     </AuthContext.Provider>

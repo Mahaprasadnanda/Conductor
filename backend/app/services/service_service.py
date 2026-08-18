@@ -48,6 +48,11 @@ class ServiceService:
     @staticmethod
     async def update_service(db: AsyncSession, service_id: int, service_in: ServiceUpdate, project_id: int) -> Service:
         service = await ServiceService.get_service(db, service_id, project_id)
+        
+        # Pre-process base_url to string and strip trailing slash if present
+        if service_in.base_url:
+            service_in.base_url = str(service_in.base_url).rstrip("/")
+            
         updated_service = await service_repo.update(db, db_obj=service, obj_in=service_in)
         
         service_cache.set(updated_service.service_name, {

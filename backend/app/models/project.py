@@ -13,3 +13,5 @@ class Project(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     owner = relationship("User", back_populates="projects")
+    services = relationship("Service", back_populates="project", cascade="all, delete-orphan")
+    api_keys = relationship("ApiKey", back_populates="project", cascade="all, delete-orphan")

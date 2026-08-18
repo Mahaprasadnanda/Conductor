@@ -62,7 +62,9 @@ async def test_load_balancer_e2e(async_client: AsyncClient, auth_headers: dict):
     try:
         nodes_hit = []
         for i in range(4):
-            res = await async_client.get("/api/v1/gateway/lb_demo_service/hello", headers=auth_headers)
+            headers = auth_headers.copy()
+            headers["Host"] = "lb_demo_service.api.localhost"
+            res = await async_client.get("/hello", headers=headers)
             try:
                 assert res.status_code == 200
                 assert "x-service-instance" in res.headers

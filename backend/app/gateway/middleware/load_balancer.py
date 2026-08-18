@@ -47,7 +47,8 @@ class LoadBalancerMiddleware(BaseMiddleware):
         # Increment active connections
         context.load_balancer.active_connections = await load_balancer_manager.increment_connections(
             selected_instance.instance_id,
-            service_name=context.gateway.service_name or "unknown"
+            service_name=context.gateway.service_name or "unknown",
+            service_id=context.gateway.service_id or 0
         )
         
         try:
@@ -64,5 +65,6 @@ class LoadBalancerMiddleware(BaseMiddleware):
             # Decrement active connections
             await load_balancer_manager.decrement_connections(
                 selected_instance.instance_id,
-                service_name=context.gateway.service_name or "unknown"
+                service_name=context.gateway.service_name or "unknown",
+                service_id=context.gateway.service_id or 0
             )

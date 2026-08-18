@@ -24,7 +24,8 @@ async def gateway_exception_handler(request: Request, exc: GatewayException):
     )
 
 async def global_exception_handler(request: Request, exc: Exception):
-    log.error("unhandled_exception", detail=str(exc), path=request.url.path)
+    import traceback
+    log.error("unhandled_exception", detail=str(exc), path=request.url.path, traceback=traceback.format_exc())
     return JSONResponse(
         status_code=500,
         content={"detail": "Internal server error"},

@@ -17,9 +17,11 @@ class ServiceRegistry:
         
         url = f"{base_url}/{health_path}"
         
-        # If currently importing, do not check health
+        # If currently importing or disabled, do not check health
         if service_data.get("status") == ServiceStatus.IMPORTING:
             return service_name, ServiceStatus.IMPORTING
+        if service_data.get("status") == ServiceStatus.DISABLED:
+            return service_name, ServiceStatus.DISABLED
 
         async with httpx.AsyncClient(timeout=5.0) as client:
             try:

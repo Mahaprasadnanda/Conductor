@@ -14,9 +14,6 @@ async def _execute_proxy_gateway(service_name: str, path: str, request: Request)
     service_data = service_cache.get(service_name)
     if not service_data:
         raise ServiceUnavailableException(f"Service {service_name} not found in registry", status_code=404)
-        
-    if service_data.get("status") not in [ServiceStatus.HEALTHY, ServiceStatus.UNKNOWN]:
-        raise ServiceUnavailableException(f"Service is {service_data.get('status')}")
 
     context = RequestContext.create()
     context.gateway.service_name = service_name
@@ -35,30 +32,30 @@ async def _execute_proxy_gateway(service_name: str, path: str, request: Request)
     # Execute pipeline
     return await pipeline.execute(context, ProxyEngine.forward)
 
-@router.get("/{service_name}/{path:path}", include_in_schema=True, dependencies=[Depends(oauth2_scheme)])
+@router.get("/{service_name}/{path:path}", include_in_schema=True)
 async def proxy_gateway_get(service_name: str, path: str, request: Request):
     return await _execute_proxy_gateway(service_name, path, request)
 
-@router.post("/{service_name}/{path:path}", include_in_schema=True, dependencies=[Depends(oauth2_scheme)])
+@router.post("/{service_name}/{path:path}", include_in_schema=True)
 async def proxy_gateway_post(service_name: str, path: str, request: Request):
     return await _execute_proxy_gateway(service_name, path, request)
 
-@router.put("/{service_name}/{path:path}", include_in_schema=True, dependencies=[Depends(oauth2_scheme)])
+@router.put("/{service_name}/{path:path}", include_in_schema=True)
 async def proxy_gateway_put(service_name: str, path: str, request: Request):
     return await _execute_proxy_gateway(service_name, path, request)
 
-@router.patch("/{service_name}/{path:path}", include_in_schema=True, dependencies=[Depends(oauth2_scheme)])
+@router.patch("/{service_name}/{path:path}", include_in_schema=True)
 async def proxy_gateway_patch(service_name: str, path: str, request: Request):
     return await _execute_proxy_gateway(service_name, path, request)
 
-@router.delete("/{service_name}/{path:path}", include_in_schema=True, dependencies=[Depends(oauth2_scheme)])
+@router.delete("/{service_name}/{path:path}", include_in_schema=True)
 async def proxy_gateway_delete(service_name: str, path: str, request: Request):
     return await _execute_proxy_gateway(service_name, path, request)
 
-@router.options("/{service_name}/{path:path}", include_in_schema=True, dependencies=[Depends(oauth2_scheme)])
+@router.options("/{service_name}/{path:path}", include_in_schema=True)
 async def proxy_gateway_options(service_name: str, path: str, request: Request):
     return await _execute_proxy_gateway(service_name, path, request)
 
-@router.head("/{service_name}/{path:path}", include_in_schema=True, dependencies=[Depends(oauth2_scheme)])
+@router.head("/{service_name}/{path:path}", include_in_schema=True)
 async def proxy_gateway_head(service_name: str, path: str, request: Request):
     return await _execute_proxy_gateway(service_name, path, request)

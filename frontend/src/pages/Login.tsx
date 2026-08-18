@@ -1,13 +1,22 @@
-import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useContext, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { AuthContext } from '../App';
 
 export default function Login() {
-  const [username, setUsername] = useState('admin@example.com');
-  const [password, setPassword] = useState('adminpassword');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [successMsg, setSuccessMsg] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('registered') === 'true') {
+      setSuccessMsg('Account created successfully, please log in.');
+    }
+  }, [location]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,8 +51,14 @@ export default function Login() {
         </h1>
         <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Sign in to Analytics Dashboard</p>
         
+        {successMsg && (
+          <div className="status-badge status-success" style={{ justifyContent: 'center', padding: '8px', marginBottom: '16px' }}>
+            {successMsg}
+          </div>
+        )}
+
         {error && (
-          <div className="status-badge status-error" style={{ justifyContent: 'center', padding: '8px' }}>
+          <div className="status-badge status-error" style={{ justifyContent: 'center', padding: '8px', marginBottom: '16px' }}>
             {error}
           </div>
         )}
@@ -75,6 +90,11 @@ export default function Login() {
             Sign In
           </button>
         </form>
+
+        <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '0.9rem' }}>
+          <span style={{ color: 'var(--text-secondary)' }}>Don't have an account?</span>{' '}
+          <Link to="/signup" style={{ color: 'var(--accent-primary)', textDecoration: 'none' }}>Sign up</Link>
+        </div>
       </div>
     </div>
   );

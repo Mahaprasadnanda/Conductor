@@ -7,12 +7,13 @@ from app.core.logger import log
 DEFAULT_MIDDLEWARE_ORDER = [
     "request_id",
     "prometheus",
+    "timing",
+    "logging",
+    "status",
     "authentication",
     "rate_limiter",
     "resilience",
-    "load_balancer",
-    "logging",
-    "timing"
+    "load_balancer"
 ]
 
 class GatewayPipeline:

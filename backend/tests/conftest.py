@@ -9,52 +9,75 @@ from app.config.settings import settings
 import asyncio
 from app.auth.security import get_password_hash
 from app.models.user import User
+from app.models.project import Project
+from app.models.api_key import ApiKey
+from app.models.service import Service, ServiceInstance
+from app.models.rate_limit import RateLimitPolicy
+from app.models.resilience import ResiliencePolicy
 
 # Use an SQLite in-memory database for testing, or a separate test DB
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# We define it per-test to support concurrent connections (no InterfaceError)
+import uuid
+from sqlalchemy.pool import StaticPool
 
-engine = create_async_engine(TEST_DATABASE_URL, echo=False)
-TestingSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-@pytest_asyncio.fixture(scope="session")
-def event_loop():
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+@pytest_asyncio.fixture(scope="function", autouse=True)
+async def isolated_test_env():
+    import app.database.connection as db_conn
+    from redis.asyncio import ConnectionPool
+    from unittest.mock import AsyncMock
+    import os
+    
+    # 1. Create fresh engine for this specific test's event loop
+    db_file = f"{uuid.uuid4().hex}.db"
+    test_db_url = f"sqlite+aiosqlite:///{db_file}"
+    test_engine = create_async_engine(test_db_url, echo=False)
+    
+    # Configure the global session maker to use this engine
+    original_bind = db_conn.async_session_maker.kw.get('bind')
+    db_conn.async_session_maker.configure(bind=test_engine)
+    
+    # 2. Initialize tables in the fresh db
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+        
+    # 3. Create fresh Redis ConnectionPool for this specific test's event loop
+    pool = ConnectionPool.from_url(settings.REDIS_URL, decode_responses=True)
+    original_pool = db_conn.redis_client.connection_pool
+    db_conn.redis_client.connection_pool = pool
+    
+    await db_conn.redis_client.flushdb()
+    
+    # Prevent lifespan from closing the global redis client (since we share the wrapper object)
+    if not isinstance(db_conn.redis_client.aclose, AsyncMock):
+        db_conn.redis_client.aclose = AsyncMock()
+    
+    yield db_conn.async_session_maker
+    
+    # Teardown
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+    await test_engine.dispose()
+    
+    if os.path.exists(db_file):
+        os.remove(db_file)
+    
+    # Restore
+    db_conn.async_session_maker.configure(bind=original_bind)
+    db_conn.redis_client.connection_pool = original_pool
 
 @pytest_asyncio.fixture(scope="function")
-async def db_session():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    
-    async with TestingSessionLocal() as session:
+async def db_session(isolated_test_env):
+    test_maker = isolated_test_env
+    async with test_maker() as session:
         yield session
-    
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
 
 @pytest.fixture(scope="function")
 def override_get_db(db_session):
     async def _override_get_db():
         yield db_session
     app.dependency_overrides[get_db_session] = _override_get_db
-    
-    # Also override the global async_session_maker for middlewares
-    import app.database.connection as db_conn
-    from contextlib import asynccontextmanager
-    
-    original_maker = db_conn.async_session_maker
-    
-    @asynccontextmanager
-    async def _mock_maker():
-        yield db_session
-        
-    db_conn.async_session_maker = _mock_maker
-    
     yield
-    
     app.dependency_overrides.clear()
-    db_conn.async_session_maker = original_maker
 
 @pytest_asyncio.fixture(scope="function")
 async def async_client(override_get_db):
@@ -80,10 +103,4 @@ async def auth_headers(async_client, test_user):
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
 
-@pytest_asyncio.fixture(scope="function", autouse=True)
-async def flush_redis():
-    from redis.asyncio import Redis
-    from app.config.settings import settings
-    redis = Redis.from_url(settings.REDIS_URL, decode_responses=True)
-    await redis.flushdb()
-    await redis.aclose()
+
