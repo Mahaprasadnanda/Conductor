@@ -1,31 +1,30 @@
-import React, { useState, useEffect, useContext } from 'react';
+﻿import React, { useState, useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { AuthContext } from '../App';
-import { Key, Plus, AlertTriangle, Copy, Check } from 'lucide-react';
+import { Key, Plus, Copy, Check, Trash2 } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
+import EmptyState from '../components/EmptyState';
 
 export default function ApiKeys() {
   const { projectId } = useParams<{ projectId: string }>();
   const { token, logout } = useContext(AuthContext);
-  
+
   const [apiKeys, setApiKeys] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [newKeyName, setNewKeyName] = useState('');
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [revokeConfirm, setRevokeConfirm] = useState<number | null>(null);
 
   const fetchKeys = async () => {
     try {
       const res = await fetch(`/api/v1/api_keys/?project_id=${projectId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.status === 401) {
-        logout();
-        return;
-      }
-      if (res.ok) {
-        setApiKeys(await res.json());
-      }
+      if (res.status === 401) { logout(); return; }
+      if (res.ok) setApiKeys(await res.json());
     } catch (e) {
       console.error(e);
     } finally {
@@ -33,29 +32,19 @@ export default function ApiKeys() {
     }
   };
 
-  useEffect(() => {
-    fetchKeys();
-  }, [projectId, token]);
+  useEffect(() => { fetchKeys(); }, [projectId, token]);
 
   const handleCreateApiKey = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newKeyName) return;
-    
+    setCreating(true);
     try {
       const res = await fetch('/api/v1/api_keys/', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name: newKeyName, project_id: Number(projectId) })
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newKeyName, project_id: Number(projectId) }),
       });
-      
-      if (res.status === 401) {
-        logout();
-        return;
-      }
-      
+      if (res.status === 401) { logout(); return; }
       if (res.ok) {
         const data = await res.json();
         setRevealedKey(data.raw_key);
@@ -63,28 +52,20 @@ export default function ApiKeys() {
         setCopied(false);
         fetchKeys();
       }
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) { console.error(e); }
+    finally { setCreating(false); }
   };
-  
+
   const handleRevokeApiKey = async (id: number) => {
-    if (!window.confirm("Are you sure you want to revoke this API key? Active integrations using this key will immediately start failing.")) {
-      return;
-    }
+    setRevokeConfirm(null);
     try {
       const res = await fetch(`/api/v1/api_keys/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.status === 401) {
-        logout();
-        return;
-      }
-      fetchKeys();
-    } catch (e) {
-      console.error(e);
-    }
+      if (res.status === 401) { logout(); return; }
+      if (res.ok) fetchKeys();
+    } catch (e) { console.error(e); }
   };
 
   const copyToClipboard = () => {
@@ -97,93 +78,122 @@ export default function ApiKeys() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h2><Key size={24} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} /> API Keys</h2>
-      </div>
-
-      <p style={{color: 'var(--text-secondary)', marginBottom: '32px'}}>
-        Use API keys to authenticate your backend services with the Conductor gateway. Keys are project-scoped and should be kept secure.
-      </p>
+      <PageHeader
+        title="API Keys"
+        icon={<Key size={24} />}
+        description="Manage API keys for authenticating your services with the Conductor gateway."
+      />
 
       {revealedKey && (
-        <div style={{padding: '24px', background: 'rgba(46, 204, 113, 0.1)', border: '1px solid var(--success-color)', borderRadius: '8px', marginBottom: '32px'}}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--success-color)', marginBottom: '16px' }}>
-            <AlertTriangle size={20} /> 
-            <h3 style={{ margin: 0 }}>API Key Created Successfully</h3>
+        <div className="card" style={{ borderLeft: '3px solid var(--success)', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <span style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--success)' }}>API Key Created</span>
           </div>
-          <p style={{margin: '0 0 16px 0'}}>
-            Please copy this key now and store it securely. <strong>You will not be able to see it again.</strong>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0 0 14px' }}>
+            Copy this key now. You will not be able to view it again.
           </p>
-          <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
-            <code style={{padding: '12px 16px', background: 'rgba(0,0,0,0.5)', borderRadius: '4px', flex: 1, fontFamily: 'monospace', fontSize: '1.2rem', color: '#fff', border: '1px solid rgba(255,255,255,0.1)'}}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <code style={{
+              flex: 1, padding: '10px 14px', background: 'var(--bg-base)', borderRadius: 'var(--radius-md)',
+              fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--text-primary)',
+              border: '1px solid var(--border)', overflowX: 'auto', whiteSpace: 'nowrap',
+            }}>
               {revealedKey}
             </code>
-            <button className="btn-primary" onClick={copyToClipboard} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {copied ? <Check size={16} /> : <Copy size={16} />} {copied ? 'Copied!' : 'Copy'}
+            <button className="btn btn-primary btn-sm" onClick={copyToClipboard}>
+              {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copied' : 'Copy'}
             </button>
-            <button className="btn-primary" style={{background: 'transparent', border: '1px solid var(--border-color)'}} onClick={() => setRevealedKey(null)}>Done</button>
+            <button className="btn btn-secondary btn-sm" onClick={() => setRevealedKey(null)}>Done</button>
           </div>
         </div>
       )}
 
-      <div className="glass-panel" style={{ marginBottom: '32px' }}>
-        <h3 style={{ margin: '0 0 16px 0' }}>Generate New Key</h3>
-        <form onSubmit={handleCreateApiKey} style={{display: 'flex', gap: '12px'}}>
-          <input 
-            type="text" 
-            className="form-input" 
-            placeholder="New API Key Name (e.g. Production Gateway)" 
-            value={newKeyName} 
-            onChange={e => setNewKeyName(e.target.value)} 
-            style={{flex: 1}}
+      <div className="card" style={{ marginBottom: '20px' }}>
+        <div className="card-header" style={{ marginBottom: '14px' }}>
+          <span className="card-title">Generate New Key</span>
+        </div>
+        <form onSubmit={handleCreateApiKey} style={{ display: 'flex', gap: '8px' }}>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Key name (e.g. Production Gateway)"
+            value={newKeyName}
+            onChange={(e) => setNewKeyName(e.target.value)}
+            style={{ flex: 1 }}
             required
           />
-          <button type="submit" className="btn-primary" style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-            <Plus size={16} /> Generate Key
+          <button type="submit" className="btn btn-primary" disabled={creating || !newKeyName}>
+            {creating ? 'Generating...' : <><Plus size={15} /> Generate</>}
           </button>
         </form>
       </div>
 
-      <div className="glass-panel" style={{ overflowX: 'auto' }}>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Prefix</th>
-              <th>Status</th>
-              <th>Created</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {apiKeys.map(k => (
-              <tr key={k.id}>
-                <td><strong>{k.name}</strong></td>
-                <td style={{fontFamily: 'monospace'}}>{k.prefix}...</td>
-                <td>
-                  {k.is_active ? 
-                    <span className="status-badge status-success">Active</span> : 
-                    <span className="status-badge status-error">Revoked</span>
-                  }
-                </td>
-                <td>{new Date(k.created_at).toLocaleDateString()}</td>
-                <td>
-                  {k.is_active && (
-                    <button onClick={() => handleRevokeApiKey(k.id)} style={{background: 'transparent', border: '1px solid var(--error-color)', color: 'var(--error-color)', borderRadius: '4px', cursor: 'pointer', padding: '6px 12px', fontSize: '0.9rem'}}>
-                      Revoke
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {!loading && apiKeys.length === 0 && (
-              <tr><td colSpan={5} style={{textAlign: 'center', opacity: 0.5}}>No API keys found for this project.</td></tr>
-            )}
-            {loading && (
-              <tr><td colSpan={5} style={{textAlign: 'center'}}>Loading...</td></tr>
-            )}
-          </tbody>
-        </table>
+      <div className="card">
+        {loading ? (
+          <div className="loading-container"><div className="loading-spinner" /></div>
+        ) : apiKeys.length === 0 ? (
+          <EmptyState
+            title="No API keys"
+            description="Generate an API key to authenticate requests through the Conductor gateway."
+          />
+        ) : (
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Prefix</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th style={{ textAlign: 'right' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {apiKeys.map((k) => (
+                  <tr key={k.id}>
+                    <td><strong>{k.name}</strong></td>
+                    <td className="mono">{k.prefix}...</td>
+                    <td>
+                      {k.is_active ? (
+                        <span className="badge badge-success"><span className="badge-dot" /> Active</span>
+                      ) : (
+                        <span className="badge badge-error"><span className="badge-dot" /> Revoked</span>
+                      )}
+                    </td>
+                    <td className="text-muted">{new Date(k.created_at).toLocaleDateString()}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      {k.is_active && (
+                        <button onClick={() => setRevokeConfirm(k.id)} className="btn btn-ghost btn-sm" style={{ color: 'var(--error)' }}>
+                          <Trash2 size={13} /> Revoke
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Revoke Confirmation Modal */}
+      <div className="modal-overlay" style={{ display: revokeConfirm === null ? 'none' : 'flex' }} onClick={() => setRevokeConfirm(null)} role="dialog" aria-modal="true" aria-label="Revoke API Key">
+        <div className="modal-content" style={{ maxWidth: '420px' }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h3 className="modal-title">Revoke API Key</h3>
+          </div>
+          <div className="modal-body">
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
+              Active integrations using this key will immediately start failing. This action cannot be undone.
+            </p>
+          </div>
+          <div className="modal-footer">
+            <button className="btn btn-secondary" onClick={() => setRevokeConfirm(null)}>Cancel</button>
+            <button className="btn btn-danger" onClick={() => revokeConfirm !== null && handleRevokeApiKey(revokeConfirm)}>
+              <Trash2 size={14} /> Revoke Key
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

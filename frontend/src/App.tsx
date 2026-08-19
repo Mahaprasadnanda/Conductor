@@ -28,13 +28,11 @@ function App() {
   const [token, setToken] = useState<string | null>(() => {
     const storedToken = localStorage.getItem('conductor_token');
     if (!storedToken) return null;
-    
+
     try {
-      // Decode JWT payload without an external library
       const payloadBase64 = storedToken.split('.')[1];
       const decodedPayload = JSON.parse(atob(payloadBase64));
-      
-      // Check if token is expired (exp is in seconds, Date.now() is in ms)
+
       if (decodedPayload.exp && decodedPayload.exp * 1000 < Date.now()) {
         localStorage.removeItem('conductor_token');
         return null;
@@ -59,18 +57,17 @@ function App() {
 
   return (
     <AuthContext.Provider value={{ token, login, logout }}>
-      <div className="background-glow"></div>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          
+
           <Route path="/" element={
             <ProtectedRoute>
               <Navigate to="/projects" replace />
             </ProtectedRoute>
           } />
-          
+
           <Route path="/projects" element={
             <ProtectedRoute>
               <Projects />

@@ -1,17 +1,26 @@
 import httpx
 import json
+import os
 from datetime import datetime, timezone, timedelta
 from app.database.connection import redis_client
 from app.core.logger import log
 
-PROMETHEUS_URL = "http://prometheus:9090"
+PROMETHEUS_URL = os.getenv("PROMETHEUS_URL", "http://prometheus:9090")
+GRAFANA_CLOUD_USERNAME = os.getenv("GRAFANA_CLOUD_USERNAME")
+GRAFANA_CLOUD_API_KEY = os.getenv("GRAFANA_CLOUD_API_KEY")
 
 class AnalyticsService:
+    @staticmethod
+    def _get_auth():
+        if GRAFANA_CLOUD_USERNAME and GRAFANA_CLOUD_API_KEY:
+            return (GRAFANA_CLOUD_USERNAME, GRAFANA_CLOUD_API_KEY)
+        return None
+
     @staticmethod
     async def query_prometheus(query: str) -> dict:
         """Execute an instant query against Prometheus."""
         try:
-            async with httpx.AsyncClient(timeout=3.0) as client:
+            async with httpx.AsyncClient(timeout=3.0, auth=AnalyticsService._get_auth()) as client:
                 res = await client.get(f"{PROMETHEUS_URL}/api/v1/query", params={"query": query})
                 res.raise_for_status()
                 return res.json().get("data", {}).get("result", [])
@@ -23,7 +32,7 @@ class AnalyticsService:
     async def query_prometheus_range(query: str, start: str, end: str, step: str) -> dict:
         """Execute a range query against Prometheus."""
         try:
-            async with httpx.AsyncClient(timeout=3.0) as client:
+            async with httpx.AsyncClient(timeout=3.0, auth=AnalyticsService._get_auth()) as client:
                 res = await client.get(
                     f"{PROMETHEUS_URL}/api/v1/query_range", 
                     params={"query": query, "start": start, "end": end, "step": step}

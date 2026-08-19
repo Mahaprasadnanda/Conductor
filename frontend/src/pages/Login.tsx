@@ -6,6 +6,7 @@ export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,12 +15,14 @@ export default function Login() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('registered') === 'true') {
-      setSuccessMsg('Account created successfully, please log in.');
+      setSuccessMsg('Account created successfully. Please sign in.');
     }
   }, [location]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
     try {
       const form = new URLSearchParams();
       form.append('username', username);
@@ -28,7 +31,7 @@ export default function Login() {
       const res = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: form.toString()
+        body: form.toString(),
       });
 
       if (!res.ok) {
@@ -38,62 +41,75 @@ export default function Login() {
       const data = await res.json();
       login(data.access_token);
       navigate('/');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="glass-panel login-card">
-        <h1 className="login-title">
-          <span className="header-brand">Conductor</span>
-        </h1>
-        <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Sign in to Analytics Dashboard</p>
-        
+    <div className="auth-page">
+      <div className="card auth-card">
+        <div className="auth-brand">
+          <h1 className="auth-brand-text">Conductor</h1>
+        </div>
+        <p className="auth-subtitle">Sign in to your developer portal</p>
+
         {successMsg && (
-          <div className="status-badge status-success" style={{ justifyContent: 'center', padding: '8px', marginBottom: '16px' }}>
+          <div className="alert alert-success" style={{ marginBottom: '16px' }}>
             {successMsg}
           </div>
         )}
 
         {error && (
-          <div className="status-badge status-error" style={{ justifyContent: 'center', padding: '8px', marginBottom: '16px' }}>
+          <div className="alert alert-error" style={{ marginBottom: '16px' }}>
             {error}
           </div>
         )}
-        
+
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div className="form-group">
-            <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Email Address</label>
-            <input 
-              type="text" 
-              className="form-input" 
+            <label className="form-label" htmlFor="login-email">Email Address</label>
+            <input
+              id="login-email"
+              type="text"
+              className="form-input"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              required 
+              placeholder="you@example.com"
+              required
+              autoComplete="username"
             />
           </div>
-          
+
           <div className="form-group">
-            <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Password</label>
-            <input 
-              type="password" 
-              className="form-input" 
+            <label className="form-label" htmlFor="login-password">Password</label>
+            <input
+              id="login-password"
+              type="password"
+              className="form-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required 
+              placeholder="Enter your password"
+              required
+              autoComplete="current-password"
             />
           </div>
-          
-          <button type="submit" className="btn-primary" style={{ marginTop: '8px' }}>
-            Sign In
+
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '4px' }} disabled={loading}>
+            {loading ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="loading-spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
+                Signing in...
+              </span>
+            ) : 'Sign In'}
           </button>
         </form>
 
-        <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '0.9rem' }}>
-          <span style={{ color: 'var(--text-secondary)' }}>Don't have an account?</span>{' '}
-          <Link to="/signup" style={{ color: 'var(--accent-primary)', textDecoration: 'none' }}>Sign up</Link>
+        <div className="auth-footer">
+          Don't have an account?{' '}
+          <Link to="/signup">Create one</Link>
         </div>
       </div>
     </div>

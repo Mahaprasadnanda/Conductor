@@ -1,109 +1,106 @@
-import { useContext, useEffect, useState } from 'react';
-import { Outlet, NavLink, useParams, useNavigate } from 'react-router-dom';
-import { Activity, Server, Key, FileText, ChevronLeft, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { useContext, useEffect, useState, useCallback } from 'react';
+import { Outlet, NavLink, useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Activity, Server, Key, FileText, ChevronLeft, LogOut, Settings as SettingsIcon, Menu, X } from 'lucide-react';
 import { AuthContext } from '../App';
+
+const NAV_ITEMS = [
+  { to: 'analytics', label: 'Overview', icon: Activity },
+  { to: 'services', label: 'Services', icon: Server },
+  { to: 'keys', label: 'API Keys', icon: Key },
+  { to: 'integration', label: 'Integration', icon: FileText },
+  { to: 'settings', label: 'Settings', icon: SettingsIcon },
+];
 
 export default function ProjectLayout() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { token, logout } = useContext(AuthContext);
-  const [projectName, setProjectName] = useState<string>('Loading...');
+  const [projectName, setProjectName] = useState('Loading...');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const fetchProject = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/v1/projects/${projectId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 401) {
+        logout();
+        return;
+      }
+      if (res.ok) {
+        const data = await res.json();
+        if (data.name) setProjectName(data.name);
+      }
+    } catch {
+      setProjectName('Unknown Project');
+    }
+  }, [projectId, token, logout]);
 
   useEffect(() => {
-    fetch(`/api/v1/projects/${projectId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-      .then(res => {
-        if (res.status === 401) {
-          logout();
-          throw new Error("Unauthorized");
-        }
-        return res.json();
-      })
-      .then(data => {
-        if (data.name) setProjectName(data.name);
-      })
-      .catch(() => setProjectName('Unknown Project'));
-  }, [projectId, token]);
+    fetchProject();
+  }, [fetchProject]);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw' }}>
-      {/* Sidebar */}
-      <div style={{
-        width: '240px', 
-        borderRight: '1px solid var(--border-color)', 
-        background: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        <div style={{ padding: '24px 16px', borderBottom: '1px solid var(--border-color)' }}>
-          <button 
-            onClick={() => navigate('/projects')}
-            style={{ 
-              background: 'transparent', border: 'none', color: 'var(--text-secondary)',
-              display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer',
-              marginBottom: '16px', padding: 0
-            }}
-          >
-            <ChevronLeft size={16} /> All Projects
-          </button>
-          <div style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--accent-primary)' }}>
-            {projectName}
-          </div>
+    <div className="app-layout">
+      {sidebarOpen && <div className="sidebar-overlay visible" onClick={() => setSidebarOpen(false)} />}
+
+      <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`} role="navigation" aria-label="Project navigation">
+        <div className="sidebar-brand">
+          <span className="sidebar-brand-name">Conductor</span>
         </div>
-        
-        <nav style={{ padding: '16px 0', flex: 1 }}>
-          <NavLink 
-            to={`/projects/${projectId}/analytics`}
-            className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}
-            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 24px', color: 'var(--text-secondary)', textDecoration: 'none' }}
-          >
-            <Activity size={18} /> Analytics
-          </NavLink>
-          <NavLink 
-            to={`/projects/${projectId}/services`}
-            className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}
-            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 24px', color: 'var(--text-secondary)', textDecoration: 'none' }}
-          >
-            <Server size={18} /> Services
-          </NavLink>
-          <NavLink 
-            to={`/projects/${projectId}/keys`}
-            className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}
-            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 24px', color: 'var(--text-secondary)', textDecoration: 'none' }}
-          >
-            <Key size={18} /> API Keys
-          </NavLink>
-          <NavLink 
-            to={`/projects/${projectId}/integration`}
-            className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}
-            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 24px', color: 'var(--text-secondary)', textDecoration: 'none' }}
-          >
-            <FileText size={18} /> Integration
-          </NavLink>
-          <NavLink 
-            to={`/projects/${projectId}/settings`}
-            className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}
-            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 24px', color: 'var(--text-secondary)', textDecoration: 'none' }}
-          >
-            <SettingsIcon size={18} /> Settings
-          </NavLink>
+
+        <div className="sidebar-project">
+          <button className="sidebar-project-back" onClick={() => navigate('/projects')}>
+            <ChevronLeft size={14} /> All Projects
+          </button>
+          <div className="sidebar-project-name" title={projectName}>{projectName}</div>
+        </div>
+
+        <nav className="sidebar-nav">
+          <div className="sidebar-section-label">Navigation</div>
+          {NAV_ITEMS.map((item) => (
+            <NavLink
+              key={item.to}
+              to={`/projects/${projectId}/${item.to}`}
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            >
+              <item.icon size={18} />
+              {item.label}
+            </NavLink>
+          ))}
         </nav>
 
-        <div style={{ padding: '16px', borderTop: '1px solid var(--border-color)' }}>
-          <button 
-            className="btn-primary" 
-            onClick={logout} 
-            style={{ width: '100%', background: 'transparent', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-          >
-            <LogOut size={16} /> Logout
+        <div className="sidebar-footer">
+          <button className="sidebar-logout" onClick={logout}>
+            <LogOut size={18} />
+            Sign Out
           </button>
         </div>
-      </div>
+      </aside>
 
-      {/* Main Content Area */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '32px' }}>
-        <Outlet />
+      <div className="content-area">
+        <div className="mobile-header">
+          <button className="mobile-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Open navigation">
+            <Menu size={20} />
+          </button>
+          <span className="mobile-project-name">{projectName}</span>
+          {sidebarOpen && (
+            <button className="mobile-hamburger" onClick={() => setSidebarOpen(false)} aria-label="Close navigation" style={{ marginLeft: 'auto' }}>
+              <X size={20} />
+            </button>
+          )}
+        </div>
+
+        <main className="content-scroll">
+          <div className="page-container">
+            <Outlet />
+          </div>
+        </main>
       </div>
     </div>
   );
