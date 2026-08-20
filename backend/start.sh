@@ -9,5 +9,8 @@ if [ -n "$GRAFANA_CLOUD_REMOTE_WRITE_URL" ]; then
     alloy run /app/config.alloy > /dev/null 2>&1 &
 fi
 
+echo "Running Database Migrations..."
+alembic upgrade head
+
 echo "Starting Uvicorn..."
 exec uvicorn app.main:app --host 0.0.0.0 --port 8000
