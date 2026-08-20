@@ -13,7 +13,7 @@ export default function Integration() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/v1/services/?project_id=${projectId}`, {
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/services/?project_id=${projectId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {

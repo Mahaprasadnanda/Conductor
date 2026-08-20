@@ -21,7 +21,7 @@ export default function ProjectLayout() {
 
   const fetchProject = useCallback(async () => {
     try {
-      const res = await fetch(`/api/v1/projects/${projectId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/projects/${projectId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 401) {

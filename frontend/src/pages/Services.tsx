@@ -26,7 +26,7 @@ export default function Services() {
 
   const fetchServices = async () => {
     try {
-      const res = await fetch(`/api/v1/services/?project_id=${projectId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/services/?project_id=${projectId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 401) { logout(); return; }
@@ -51,7 +51,7 @@ export default function Services() {
   const handleDeleteService = async (id: number) => {
     setDeleteConfirm(null);
     try {
-      const res = await fetch(`/api/v1/services/${id}?project_id=${projectId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/services/${id}?project_id=${projectId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -63,7 +63,7 @@ export default function Services() {
     e.stopPropagation();
     const newStatus = service.status === 'Disabled' ? 'Unknown' : 'Disabled';
     try {
-      const res = await fetch(`/api/v1/services/${service.id}?project_id=${projectId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/services/${service.id}?project_id=${projectId}`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -77,7 +77,7 @@ export default function Services() {
     if (!newServiceName || !newBaseUrl) return;
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/v1/services/?project_id=${projectId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/services/?project_id=${projectId}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -115,7 +115,7 @@ export default function Services() {
     if (!currentServiceId || !newBaseUrl) return;
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/v1/services/${currentServiceId}?project_id=${projectId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/services/${currentServiceId}?project_id=${projectId}`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({

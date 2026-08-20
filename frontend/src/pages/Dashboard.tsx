@@ -31,11 +31,11 @@ export default function Dashboard() {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [overviewRes, tsRes, reqRes, errRes, intelRes] = await Promise.all([
-        fetch(`/api/v1/analytics/overview?project_id=${projectId}`, { headers }),
-        fetch(`/api/v1/analytics/timeseries?project_id=${projectId}&time_range=${timeRange}${serviceFilter ? `&service_name=${serviceFilter}` : ''}`, { headers }),
-        fetch(`/api/v1/analytics/recent-requests?project_id=${projectId}&limit=10`, { headers }),
-        fetch(`/api/v1/analytics/recent-errors?project_id=${projectId}&limit=10`, { headers }),
-        fetch(`/api/v1/intelligence/overview?project_id=${projectId}`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/analytics/overview?project_id=${projectId}`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/analytics/timeseries?project_id=${projectId}&time_range=${timeRange}${serviceFilter ? `&service_name=${serviceFilter}` : ''}`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/analytics/recent-requests?project_id=${projectId}&limit=10`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/analytics/recent-errors?project_id=${projectId}&limit=10`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/intelligence/overview?project_id=${projectId}`, { headers }),
       ]);
 
       if (

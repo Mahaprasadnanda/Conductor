@@ -15,7 +15,7 @@ export default function Settings() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/v1/projects/${projectId}`, {
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/projects/${projectId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -29,7 +29,7 @@ export default function Settings() {
   const handleDeleteProject = async () => {
     setDeleting(true);
     try {
-      const res = await fetch(`/api/v1/projects/${projectId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/projects/${projectId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });

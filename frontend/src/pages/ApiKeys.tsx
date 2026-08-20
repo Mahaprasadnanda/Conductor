@@ -20,7 +20,7 @@ export default function ApiKeys() {
 
   const fetchKeys = async () => {
     try {
-      const res = await fetch(`/api/v1/api_keys/?project_id=${projectId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/api_keys/?project_id=${projectId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 401) { logout(); return; }
@@ -39,7 +39,7 @@ export default function ApiKeys() {
     if (!newKeyName) return;
     setCreating(true);
     try {
-      const res = await fetch('/api/v1/api_keys/', {
+      const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/v1/api_keys/', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newKeyName, project_id: Number(projectId) }),
@@ -59,7 +59,7 @@ export default function ApiKeys() {
   const handleRevokeApiKey = async (id: number) => {
     setRevokeConfirm(null);
     try {
-      const res = await fetch(`/api/v1/api_keys/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/api_keys/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });

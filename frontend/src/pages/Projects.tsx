@@ -20,7 +20,7 @@ export default function Projects() {
 
   const fetchProjects = async () => {
     try {
-      const res = await fetch('/api/v1/projects/', {
+      const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/v1/projects/', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 401) {
@@ -46,7 +46,7 @@ export default function Projects() {
     if (!newProjectName) return;
     setCreating(true);
     try {
-      const res = await fetch('/api/v1/projects/', {
+      const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/v1/projects/', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -71,7 +71,7 @@ export default function Projects() {
   const handleDeleteProject = async (id: number) => {
     setDeleteConfirm(null);
     try {
-      const res = await fetch(`/api/v1/projects/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/projects/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
