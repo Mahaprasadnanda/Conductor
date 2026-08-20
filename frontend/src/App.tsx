@@ -10,6 +10,8 @@ import ApiKeys from './pages/ApiKeys';
 import Integration from './pages/Integration';
 import Settings from './pages/Settings';
 
+import Home from './pages/Home';
+
 export const AuthContext = React.createContext<{
   token: string | null;
   login: (token: string) => void;
@@ -59,14 +61,9 @@ function App() {
     <AuthContext.Provider value={{ token, login, logout }}>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-
-          <Route path="/" element={
-            <ProtectedRoute>
-              <Navigate to="/projects" replace />
-            </ProtectedRoute>
-          } />
 
           <Route path="/projects" element={
             <ProtectedRoute>
