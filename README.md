@@ -1,5 +1,5 @@
-<div align="center">
-  <h1>?? Conductor</h1>
+﻿<div align="center">
+  <h1>🚀 Conductor</h1>
   <p><strong>The Developer-First, High-Performance API Gateway</strong></p>
   <p>
     Built for modern microservices to route, monitor, secure, and analyze traffic with zero friction.
@@ -8,22 +8,22 @@
 
 ---
 
-## ?? Overview
+## 🌟 Overview
 
 **Conductor** is an open-source API Gateway and Management platform built from the ground up for performance and developer experience. It acts as the single entry point for all your microservices, providing out-of-the-box routing, rate limiting, authentication, and deep traffic analytics.
 
 Whether you're running a small hobby project or a fleet of distributed microservices, Conductor simplifies your network edge.
 
-## ? Features
+## ✨ Features
 
-- **? Blazing Fast Routing:** Built on top of FastAPI and async I/O to ensure minimal latency overhead during proxying.
-- **??? Secure by Default:** Built-in JWT authentication, API Key management, and CORS controls.
-- **?? Traffic Control:** Granular, Redis-backed rate limiting and active health checking to ensure upstream resilience.
-- **?? Deep Analytics & Metrics:** Natively exports metrics to Prometheus and Grafana Cloud (via Grafana Alloy) for real-time observability.
-- **?? Multi-Tenant Isolation:** Organize your services cleanly into Projects, ensuring strict logical boundaries.
-- **?? Beautiful UI:** A fully-featured modern React/Vite dashboard to manage services, view analytics, and generate API keys.
+- **⚡ Blazing Fast Routing:** Built on top of FastAPI and async I/O to ensure minimal latency overhead during proxying.
+- **🛡️ Secure by Default:** Built-in JWT authentication, API Key management, and CORS controls.
+- **🚦 Traffic Control:** Granular, Redis-backed rate limiting and active health checking to ensure upstream resilience.
+- **📊 Deep Analytics & Metrics:** Natively exports metrics to Prometheus and Grafana Cloud (via Grafana Alloy) for real-time observability.
+- **🏢 Multi-Tenant Isolation:** Organize your services cleanly into Projects, ensuring strict logical boundaries.
+- **💻 Beautiful UI:** A fully-featured modern React/Vite dashboard to manage services, view analytics, and generate API keys.
 
-## ??? Architecture
+## 🏗️ Architecture
 
 Conductor consists of two primary components:
 1. \ackend/\: A high-performance Python **FastAPI** application backed by **PostgreSQL** (metadata & configuration) and **Redis** (caching, rate limiting).
@@ -31,7 +31,7 @@ Conductor consists of two primary components:
 
 ---
 
-## ?? Quick Start (Local Development)
+## 🚀 Quick Start (Local Development)
 
 The easiest way to run Conductor locally is using Docker Compose.
 
@@ -59,7 +59,7 @@ docker compose up -d
 
 ---
 
-## ?? Production Deployment
+## 🌐 Production Deployment
 
 Conductor is designed to be easily deployed to modern cloud providers like Render, Vercel, and Neon.
 
@@ -84,7 +84,7 @@ Conductor is designed to be easily deployed to modern cloud providers like Rende
 
 ---
 
-## ?? Contributing
+## 🤝 Contributing
 
 **Contributions are highly welcome and deeply appreciated!** 
 
@@ -95,14 +95,14 @@ If you have suggestions for improvements, want to fix a bug, or want to add a ne
 4. Push to the Branch (\git push origin feature/AmazingFeature\)
 5. Open a Pull Request
 
-## ?? Contact & Support
+## 📬 Contact & Support
 
 For queries, suggestions, or support, please reach out!
 
-?? **Email:** [Mahaprasad.programmer@gmail.com](mailto:Mahaprasad.programmer@gmail.com)  
-?? **GitHub:** [Mahaprasadnanda](https://github.com/Mahaprasadnanda)
+📧 **Email:** [Mahaprasad.programmer@gmail.com](mailto:Mahaprasad.programmer@gmail.com)  
+🐙 **GitHub:** [Mahaprasadnanda](https://github.com/Mahaprasadnanda)
 
 ---
 <div align="center">
-  <p>Built with ?? for developers.</p>
+  <p>Built with ❤️ for developers.</p>
 </div>
