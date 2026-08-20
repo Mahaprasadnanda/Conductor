@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { GitBranch, Mail, ArrowRight, Terminal, Zap, Shield, BarChart2 } from 'lucide-react';
+import { AuthContext } from '../App';
 
 export default function Home() {
   const [isVisible, setIsVisible] = useState(false);
+  const { token } = useContext(AuthContext);
 
   useEffect(() => {
     setIsVisible(true);
@@ -14,8 +16,14 @@ export default function Home() {
       <nav style={styles.nav}>
         <div style={styles.navBrand}>Conductor</div>
         <div style={styles.navLinks}>
-          <Link to="/login" style={styles.navLink}>Login</Link>
-          <Link to="/signup" className="btn btn-primary" style={styles.navBtn}>Get Started</Link>
+          {token ? (
+            <Link to="/projects" className="btn btn-primary" style={styles.navBtn}>Go to Dashboard</Link>
+          ) : (
+            <>
+              <Link to="/login" style={styles.navLink}>Login</Link>
+              <Link to="/signup" className="btn btn-primary" style={styles.navBtn}>Get Started</Link>
+            </>
+          )}
         </div>
       </nav>
 
@@ -32,9 +40,15 @@ export default function Home() {
           </p>
 
           <div style={styles.ctaGroup}>
-            <Link to="/signup" className="btn btn-primary" style={styles.primaryBtn}>
-              Start Building <ArrowRight size={18} />
-            </Link>
+            {token ? (
+              <Link to="/projects" className="btn btn-primary" style={styles.primaryBtn}>
+                Go to Dashboard <ArrowRight size={18} />
+              </Link>
+            ) : (
+              <Link to="/signup" className="btn btn-primary" style={styles.primaryBtn}>
+                Start Building <ArrowRight size={18} />
+              </Link>
+            )}
             <a href="https://github.com/Mahaprasadnanda/Conductor" target="_blank" rel="noreferrer" style={styles.secondaryBtn}>
               <GitBranch size={18} /> View on GitHub
             </a>

@@ -40,7 +40,7 @@ export default function Login() {
 
       const data = await res.json();
       login(data.access_token);
-      navigate('/');
+      navigate('/projects');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
