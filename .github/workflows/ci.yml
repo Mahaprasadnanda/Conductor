@@ -44,6 +44,7 @@ jobs:
       - name: Run Backend Tests
         env:
           PYTHONPATH: .
+          DATABASE_URL: sqlite+aiosqlite:///./ci_test.db
           REDIS_URL: redis://localhost:6379/0
           JWT_SECRET_KEY: test_secret_key_for_ci
           GRAFANA_CLOUD_USERNAME: test
