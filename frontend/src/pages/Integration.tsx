@@ -17,7 +17,10 @@ export default function Integration() {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
-        if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
+        if (res.status === 401) {
+          logout();
+          throw new Error('Unauthorized');
+        }
         return res.json();
       })
       .then((data) => {
@@ -29,16 +32,23 @@ export default function Integration() {
       .catch(console.error);
   }, [projectId, token, logout]);
 
-  const gatewayHost = import.meta.env.VITE_GATEWAY_URL || window.location.hostname;
-  const gatewayPort = import.meta.env.VITE_GATEWAY_PORT || '8000';
+  // The gateway is served by the Conductor backend, not the Vercel frontend.
+  // Keep a local override for development, but default production to the
+  // deployed FastAPI service so copied integration URLs are actually usable.
+  const gatewayBaseUrl = (import.meta.env.VITE_GATEWAY_URL || 'https://conductor-backend-1snf.onrender.com')
+    .replace(/\/$/, '');
   const gatewayScheme = import.meta.env.VITE_GATEWAY_SCHEME || 'http';
+  const gatewayPort = import.meta.env.VITE_GATEWAY_PORT || '8000';
 
   const getGatewayUrl = () => {
     if (!selectedService) return '';
-    if (gatewayHost === 'localhost' || gatewayHost === '127.0.0.1') {
+
+    // Local development keeps the host-routing convention used by Conductor.
+    if (gatewayBaseUrl === 'http://localhost:8000' || gatewayBaseUrl === 'https://localhost:8000') {
       return `${gatewayScheme}://${selectedService.service_name}.api.localhost:${gatewayPort}/api/v1/gateway/${selectedService.service_name}`;
     }
-    return `${gatewayScheme}://${gatewayHost}/api/v1/gateway/${selectedService.service_name}`;
+
+    return `${gatewayBaseUrl}/api/v1/gateway/${selectedService.service_name}`;
   };
 
   const copyCode = (code: string) => {
@@ -61,8 +71,8 @@ export default function Integration() {
     );
   }
 
-  const curlCommand = `curl -X GET ${getGatewayUrl()}${selectedService?.health_check_path || '/health'} \\
-  -H "Authorization: Bearer <YOUR_API_KEY>"`;
+  const healthPath = selectedService?.health_check_path || '/health';
+  const curlCommand = `curl -X GET ${getGatewayUrl()}${healthPath.startsWith('/') ? healthPath : `/${healthPath}`} \\\n  -H "Authorization: Bearer <YOUR_API_KEY>"`;
 
   return (
     <div>
@@ -70,7 +80,6 @@ export default function Integration() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Request Lifecycle */}
           <div className="card">
             <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, margin: '0 0 14px' }}>Gateway Request Lifecycle</h3>
             <div style={{
@@ -90,7 +99,6 @@ export default function Integration() {
             </p>
           </div>
 
-          {/* Quick Start */}
           <div className="card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
               <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, margin: 0 }}>Quick Start</h3>
@@ -127,7 +135,6 @@ export default function Integration() {
           </div>
         </div>
 
-        {/* Service Details Sidebar */}
         <div className="card" style={{ position: 'sticky', top: '20px' }}>
           <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, margin: '0 0 16px' }}>Service Details</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
