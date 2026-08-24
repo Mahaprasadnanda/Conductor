@@ -2,6 +2,7 @@ import httpx
 from urllib.parse import urlencode
 from app.gateway.context import RequestContext
 
+
 class RequestBuilder:
     @staticmethod
     async def build(context: RequestContext) -> httpx.Request:
@@ -9,13 +10,20 @@ class RequestBuilder:
         if not base_url:
             from app.gateway.exceptions import ProxyException
             raise ProxyException("Target base URL not found in request context")
-            
-        target_url = f"{base_url}/{context.gateway.path}"
+
+        target_url = f"{base_url.rstrip('/')}/{context.gateway.path.lstrip('/')}"
         if context.gateway.query_params:
             target_url = f"{target_url}?{urlencode(context.gateway.query_params)}"
-            
+
         headers = dict(context.gateway.headers)
         headers.pop("host", None)
+
+        # The gateway materializes the upstream response before returning it to
+        # FastAPI. Asking the upstream for an identity response avoids forwarding
+        # a body whose compression state can become inconsistent with proxy
+        # response headers after HTTPX/ASGI processing.
+        headers.pop("accept-encoding", None)
+        headers["accept-encoding"] = "identity"
 
         body = None
         if context.fastapi_request:
@@ -25,5 +33,5 @@ class RequestBuilder:
             method=context.gateway.method,
             url=target_url,
             headers=headers,
-            content=body
+            content=body,
         )
