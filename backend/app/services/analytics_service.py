@@ -124,7 +124,7 @@ class AnalyticsService:
         requests_total = await AnalyticsService.query_prometheus(f"sum(increase(gateway_requests_total{{{svc_filter}}}[{time_range}]))")
         req_sec = await AnalyticsService.query_prometheus(f"sum(rate(gateway_requests_total{{{svc_filter}}}[{time_range}]))")
         error_rate = await AnalyticsService.query_prometheus(
-            f"sum(rate(gateway_requests_total{{status_code=~'5..',{svc_filter}}}[{time_range}])) / sum(rate(gateway_requests_total{{{svc_filter}}}[{time_range}]))"
+            f"sum(rate(gateway_requests_total{{status_code=~'4..|5..',{svc_filter}}}[{time_range}])) / sum(rate(gateway_requests_total{{{svc_filter}}}[{time_range}]))"
         )
         p95_latency = await AnalyticsService.query_prometheus(
             f"histogram_quantile(0.95, sum(rate(gateway_request_latency_seconds_bucket{{{svc_filter}}}[{time_range}])) by (le))"
@@ -179,7 +179,7 @@ class AnalyticsService:
         p95_query = f"histogram_quantile(0.95, sum(rate(gateway_request_latency_seconds_bucket{{{svc_filter_str}}}[{rate_window}])) by (le))"
         
         # In PromQL if service_name is used, we need proper filter: 
-        status_err_filter = f'status_code=~"5..",{svc_filter_str}'
+        status_err_filter = f'status_code=~"4..|5..",{svc_filter_str}'
         error_query = f"sum(rate(gateway_requests_total{{{status_err_filter}}}[{rate_window}]))"
 
         traffic_res = await AnalyticsService.query_prometheus_range(traffic_query, start, end, step)
