@@ -73,29 +73,9 @@ Client / Application
 
 ## 🏗️ Architecture
 
-```text
-                    ┌──────────────────────┐
-                    │   React / Vite UI    │
-                    │      Vercel          │
-                    └──────────┬───────────┘
-                               │ HTTPS
-                               ▼
-                    ┌──────────────────────┐
-                    │   FastAPI Backend    │
-                    │       Render         │
-                    └──────┬──────┬────────┘
-                           │      │
-                ┌──────────┘      └───────────┐
-                ▼                             ▼
-       ┌─────────────────┐            ┌─────────────────┐
-       │    PostgreSQL   │            │      Redis      │
-       │ Metadata/config │            │ cache / limits  │
-       └─────────────────┘            └─────────────────┘
-
-                    Metrics path
-
- FastAPI /metrics → Grafana Alloy → Grafana Cloud Prometheus → Grafana
-```
+<div align="center">
+  <img src="assets/architecture.png" alt="Conductor System Architecture" width="1000"/>
+</div>
 
 ### Repository structure
 
