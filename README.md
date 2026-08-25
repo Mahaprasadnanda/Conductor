@@ -160,7 +160,7 @@ The gateway authenticates the request, applies traffic controls, selects a healt
 
 ### Developer Portal
 
-[Open Conductor](https://conductor-olive.vercel.app/login)
+[Open Conductor](https://conductor-olive.vercel.app/)
 
 ### Backend
 
