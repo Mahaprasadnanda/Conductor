@@ -295,6 +295,7 @@ export default function Dashboard() {
                 <table className="data-table">
                   <thead>
                     <tr>
+                      <th>Time</th>
                       <th>Method</th>
                       <th>Path</th>
                       <th>Status</th>
@@ -306,6 +307,9 @@ export default function Dashboard() {
                   <tbody>
                     {recentRequests.map((req, i) => (
                       <tr key={i}>
+                        <td className="mono text-xs text-muted" style={{ whiteSpace: 'nowrap' }}>
+                          {req.timestamp ? new Date(req.timestamp).toLocaleString() : 'N/A'}
+                        </td>
                         <td><span className={`method-badge method-${req.method.toLowerCase()}`}>{req.method}</span></td>
                         <td className="mono">{req.path}</td>
                         <td>
@@ -319,7 +323,7 @@ export default function Dashboard() {
                       </tr>
                     ))}
                     {recentRequests.length === 0 && (
-                      <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '32px' }}>No recent requests recorded</td></tr>
+                      <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '32px' }}>No recent requests recorded</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -334,6 +338,7 @@ export default function Dashboard() {
                 <table className="data-table">
                   <thead>
                     <tr>
+                      <th>Time</th>
                       <th>Method</th>
                       <th>Path</th>
                       <th>Status</th>
@@ -344,6 +349,9 @@ export default function Dashboard() {
                   <tbody>
                     {recentErrors.map((err, i) => (
                       <tr key={i}>
+                        <td className="mono text-xs text-muted" style={{ whiteSpace: 'nowrap' }}>
+                          {err.timestamp ? new Date(err.timestamp).toLocaleString() : 'N/A'}
+                        </td>
                         <td><span className={`method-badge method-${err.method.toLowerCase()}`}>{err.method}</span></td>
                         <td className="mono">{err.path}</td>
                         <td><span className="status-code status-5xx">{err.status_code}</span></td>
@@ -352,7 +360,7 @@ export default function Dashboard() {
                       </tr>
                     ))}
                     {recentErrors.length === 0 && (
-                      <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '32px' }}>No recent errors — all clear</td></tr>
+                      <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '32px' }}>No recent errors — all clear</td></tr>
                     )}
                   </tbody>
                 </table>
