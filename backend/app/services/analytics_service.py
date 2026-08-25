@@ -70,17 +70,20 @@ class AnalyticsService:
         return [{"id": row.id, "service_name": row.service_name} for row in res.all()]
 
     @staticmethod
-    async def get_overview(db, project_id: int) -> dict:
+    async def get_overview(db, project_id: int, time_range: str = "1h", service_name: str = None) -> dict:
         from sqlalchemy.future import select
         from app.models.service import Service, ServiceInstance, ServiceStatus
         
         # Count healthy services belonging to the project
         res_svc = await db.execute(select(Service).where(Service.project_id == project_id))
         services = res_svc.scalars().all()
+        
+        if service_name:
+            services = [s for s in services if s.service_name == service_name]
+            
         healthy_services_count = len([s for s in services if s.status == ServiceStatus.HEALTHY])
         
         service_ids = [s.id for s in services]
-        service_names = [s.service_name for s in services]
         
         # Count healthy instances belonging to these services
         if service_ids:
@@ -118,13 +121,13 @@ class AnalyticsService:
 
         # Fetch overview stats scoped to the project
         active_conns = await AnalyticsService.query_prometheus(f"sum(gateway_active_connections{{{svc_filter}}})")
-        requests_total = await AnalyticsService.query_prometheus(f"sum(gateway_requests_total{{{svc_filter}}})")
-        req_sec = await AnalyticsService.query_prometheus(f"sum(rate(gateway_requests_total{{{svc_filter}}}[1m]))")
+        requests_total = await AnalyticsService.query_prometheus(f"sum(increase(gateway_requests_total{{{svc_filter}}}[{time_range}]))")
+        req_sec = await AnalyticsService.query_prometheus(f"sum(rate(gateway_requests_total{{{svc_filter}}}[{time_range}]))")
         error_rate = await AnalyticsService.query_prometheus(
-            f"sum(rate(gateway_requests_total{{status_code=~'5..',{svc_filter}}}[1m])) / sum(rate(gateway_requests_total{{{svc_filter}}}[1m]))"
+            f"sum(rate(gateway_requests_total{{status_code=~'5..',{svc_filter}}}[{time_range}])) / sum(rate(gateway_requests_total{{{svc_filter}}}[{time_range}]))"
         )
         p95_latency = await AnalyticsService.query_prometheus(
-            f"histogram_quantile(0.95, sum(rate(gateway_request_latency_seconds_bucket{{{svc_filter}}}[1m])) by (le))"
+            f"histogram_quantile(0.95, sum(rate(gateway_request_latency_seconds_bucket{{{svc_filter}}}[{time_range}])) by (le))"
         )
         
         def extract_val(res, default=0.0):

@@ -12,11 +12,13 @@ router = APIRouter()
 @router.get("/overview")
 async def get_overview(
     project_id: int,
+    time_range: str = "1h",
+    service_name: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session)
 ):
     await ProjectService.get_project(db, project_id, owner_id=current_user.id)
-    return await AnalyticsService.get_overview(db, project_id)
+    return await AnalyticsService.get_overview(db, project_id, time_range, service_name)
 
 @router.get("/timeseries")
 async def get_timeseries(
