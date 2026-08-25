@@ -13,7 +13,7 @@ class AnalyticsService:
     @staticmethod
     def _get_auth():
         if GRAFANA_CLOUD_USERNAME and GRAFANA_CLOUD_API_KEY:
-            return (GRAFANA_CLOUD_USERNAME, GRAFANA_CLOUD_API_KEY)
+            return httpx.BasicAuth(username=GRAFANA_CLOUD_USERNAME, password=GRAFANA_CLOUD_API_KEY)
         return None
 
     @staticmethod
