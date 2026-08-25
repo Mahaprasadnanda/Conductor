@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { AuthContext } from '../App';
 
 export default function Signup() {
   const [email, setEmail] = useState('');
@@ -8,6 +9,13 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { token } = useContext(AuthContext);
+
+  useEffect(() => {
+    if (token) {
+      navigate('/projects', { replace: true });
+    }
+  }, [token, navigate]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();

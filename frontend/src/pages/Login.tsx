@@ -7,10 +7,16 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useContext(AuthContext);
+  const { token, login } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
   const [successMsg, setSuccessMsg] = useState('');
+
+  useEffect(() => {
+    if (token) {
+      navigate('/projects', { replace: true });
+    }
+  }, [token, navigate]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);

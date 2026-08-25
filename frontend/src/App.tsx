@@ -28,7 +28,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   const [token, setToken] = useState<string | null>(() => {
-    const storedToken = localStorage.getItem('conductor_token');
+    const storedToken = sessionStorage.getItem('conductor_token');
     if (!storedToken) return null;
 
     try {
@@ -36,26 +36,31 @@ function App() {
       const decodedPayload = JSON.parse(atob(payloadBase64));
 
       if (decodedPayload.exp && decodedPayload.exp * 1000 < Date.now()) {
-        localStorage.removeItem('conductor_token');
+        sessionStorage.removeItem('conductor_token');
         return null;
       }
       return storedToken;
     } catch (e) {
-      localStorage.removeItem('conductor_token');
+      sessionStorage.removeItem('conductor_token');
       return null;
     }
   });
 
   useEffect(() => {
     if (token) {
-      localStorage.setItem('conductor_token', token);
+      sessionStorage.setItem('conductor_token', token);
     } else {
-      localStorage.removeItem('conductor_token');
+      sessionStorage.removeItem('conductor_token');
     }
   }, [token]);
 
   const login = (newToken: string) => setToken(newToken);
-  const logout = () => setToken(null);
+  const logout = () => {
+    setToken(null);
+    sessionStorage.removeItem('conductor_token');
+    localStorage.removeItem('conductor_token'); // Clear legacy token if present
+    window.location.href = '/login';
+  };
 
   return (
     <AuthContext.Provider value={{ token, login, logout }}>
