@@ -52,7 +52,9 @@ class GatewayPipeline:
                         await mw.before_request(context)
                         try:
                             response = await call_middleware(index + 1)
-                        except Exception:
+                        except Exception as original_exc:
+                            if hasattr(original_exc, "status_code") and context.gateway.response_status is None:
+                                context.gateway.response_status = original_exc.status_code
                             try:
                                 await mw.after_response(context, None)
                             except Exception as e:

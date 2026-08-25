@@ -200,27 +200,27 @@ class AnalyticsService:
     @staticmethod
     async def get_recent_requests(db, project_id: int, limit: int = 50) -> list:
         services = await AnalyticsService.get_project_services(db, project_id)
-        service_names = [s["service_name"] for s in services]
-        if not service_names:
+        if not services:
             return []
         try:
             items = await redis_client.lrange("gateway:recent_requests", 0, 200)
             parsed = [json.loads(i) for i in items]
-            filtered = [req for req in parsed if req.get("service_name") in service_names]
+            filtered = [req for req in parsed if req.get("project_id") == project_id]
             return filtered[:limit]
-        except Exception:
+        except Exception as e:
+            log.error("recent_requests_fetch_error", project_id=project_id, error=str(e))
             return []
 
     @staticmethod
     async def get_recent_errors(db, project_id: int, limit: int = 50) -> list:
         services = await AnalyticsService.get_project_services(db, project_id)
-        service_names = [s["service_name"] for s in services]
-        if not service_names:
+        if not services:
             return []
         try:
             items = await redis_client.lrange("gateway:recent_errors", 0, 200)
             parsed = [json.loads(i) for i in items]
-            filtered = [err for err in parsed if err.get("service_name") in service_names]
+            filtered = [err for err in parsed if err.get("project_id") == project_id]
             return filtered[:limit]
-        except Exception:
+        except Exception as e:
+            log.error("recent_errors_fetch_error", project_id=project_id, error=str(e))
             return []

@@ -17,9 +17,13 @@ class LoggingMiddleware(BaseMiddleware):
             else:
                 status_code = 500
 
+        project_id = context.custom.metadata.get("service_data", {}).get("project_id")
+
         log_data = {
             "request_id": context.request_id,
             "trace_id": context.trace_id,
+            "project_id": project_id,
+            "service_id": context.gateway.service_id,
             "service_name": context.gateway.service_name,
             "endpoint": context.gateway.endpoint,
             "method": context.gateway.method,
@@ -50,27 +54,20 @@ class LoggingMiddleware(BaseMiddleware):
         
         log.info("proxy_request", **log_data)
         
-        # Asynchronously push to Redis for recent activity dashboard
-        import asyncio
         from app.database.connection import redis_client
         import json
         from datetime import datetime, timezone
         
-        async def push_to_redis():
+        if redis_client:
             try:
-                # Need timestamp
                 log_data["timestamp"] = datetime.now(timezone.utc).isoformat()
                 data_str = json.dumps(log_data)
                 
-                # Push to recent requests
                 await redis_client.lpush("gateway:recent_requests", data_str)
                 await redis_client.ltrim("gateway:recent_requests", 0, 199)
                 
-                # Push to recent errors if error
                 if status_code and status_code >= 400:
                     await redis_client.lpush("gateway:recent_errors", data_str)
                     await redis_client.ltrim("gateway:recent_errors", 0, 199)
             except Exception as e:
-                log.error("redis_log_push_error", error=str(e))
-                
-        asyncio.create_task(push_to_redis())
+                log.error("redis_log_push_error", error=str(e), request_id=context.request_id, service_name=context.gateway.service_name)
