@@ -61,7 +61,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 15000);
+    const interval = setInterval(fetchData, 5000); // 5 seconds for real-time feel
     return () => clearInterval(interval);
   }, [timeRange, serviceFilter, token, projectId]);
 
